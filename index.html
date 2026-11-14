@@ -508,58 +508,6 @@
       </div>
     </details>
 
-    <!-- AJUSTES DEL MODELO -->
-    <details class="secundario">
-      <summary>
-        <span>⚙️ Ajustes del Modelo</span>
-        <span class="hint">Probabilidades, umbrales y localía</span>
-      </summary>
-      <div class="importer-body">
-        <div class="grid-form">
-          <div class="form-group">
-            <label>Peso últimos 10 (%)</label>
-            <input type="number" step="5" min="0" max="100" id="aj_pesoL10">
-          </div>
-          <div class="form-group">
-            <label>Ventaja de localía (pts de margen)</label>
-            <input type="number" step="0.1" min="0" id="aj_localia">
-          </div>
-          <div class="form-group">
-            <label>Desviación totales (σ, pts)</label>
-            <input type="number" step="0.5" min="1" id="aj_sigmaTot">
-          </div>
-          <div class="form-group">
-            <label>Desviación hándicap (σ, pts)</label>
-            <input type="number" step="0.5" min="1" id="aj_sigmaHc">
-          </div>
-          <div class="form-group">
-            <label>Probabilidad mínima para apostar (%)</label>
-            <input type="number" step="0.5" min="50" max="99" id="aj_probMin">
-          </div>
-          <div class="form-group">
-            <label>Probabilidad para "FUERTE" (%)</label>
-            <input type="number" step="0.5" min="50" max="99" id="aj_probFuerte">
-          </div>
-          <div class="form-group">
-            <label>Tope de ventaja totales (pts)</label>
-            <input type="number" step="0.5" min="1" id="aj_topeTot">
-          </div>
-          <div class="form-group">
-            <label>Tope de ventaja hándicap (pts)</label>
-            <input type="number" step="0.5" min="1" id="aj_topeHc">
-          </div>
-        </div>
-        <p class="hint">
-          Con momio -110 necesitas más de 52.4% solo para no perder. Si la ventaja supera el tope, el pick se marca como "REVISAR NOTICIAS"
-          porque casi siempre significa que falta información (lesiones, descansos). Al guardar, se recalculan los picks de la jornada que aún no tienen resultado.
-        </p>
-        <div class="toolbar">
-          <button type="button" id="btnGuardarAjustes" class="btn-secondary" style="background-color: #0284c7; border-color: #0284c7;">Guardar Ajustes</button>
-          <button type="button" id="btnRestablecerAjustes" class="btn-secondary">Restablecer Valores</button>
-        </div>
-      </div>
-    </details>
-
     <!-- FORMULARIO DE CAPTURA -->
     <div class="card">
       <form id="partidoForm">
@@ -595,17 +543,6 @@
                 <option value="3">3+ días</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>🚑 Bajas: −OFFRTG</label>
-              <input type="number" step="any" min="0" max="15" id="bajaOffA" value="0">
-            </div>
-            <div class="form-group">
-              <label>🚑 Bajas: +DEFRTG</label>
-              <input type="number" step="any" min="0" max="15" id="bajaDefA" value="0">
-            </div>
-            <label class="checkbox-label">
-              <input type="checkbox" id="tresA"> 🔁 3er juego en 4 noches
-            </label>
           </div>
         </div>
 
@@ -641,17 +578,6 @@
                 <option value="3">3+ días</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>🚑 Bajas: −OFFRTG</label>
-              <input type="number" step="any" min="0" max="15" id="bajaOffB" value="0">
-            </div>
-            <div class="form-group">
-              <label>🚑 Bajas: +DEFRTG</label>
-              <input type="number" step="any" min="0" max="15" id="bajaDefB" value="0">
-            </div>
-            <label class="checkbox-label">
-              <input type="checkbox" id="tresB"> 🔁 3er juego en 4 noches
-            </label>
             <label class="checkbox-label">
               <input type="checkbox" id="giraB"> ✈️ Gira larga (4.º+ juego seguido de visita)
             </label>
@@ -659,7 +585,6 @@
         </div>
 
         <p class="hint" style="margin-bottom: 1rem;">
-          🚑 Guía de bajas: estrella ≈ 3 a 7 pts, titular ≈ 1 a 3 pts, suplente ≈ 0 a 1. Pon 0 si el jugador ya llevaba varios partidos fuera (sus estadísticas ya lo reflejan).
           🏔️ La altura se aplica sola cuando el local es DEN o UTA.
         </p>
 
@@ -1017,12 +942,6 @@
     selectEqB.addEventListener('change', function() { actualizarOpciones(); rellenarEquipo(this.value, 'B'); });
 
     // ================== AJUSTES ==================
-    const camposAjustes = Object.keys(AJUSTES_DEFAULT);
-
-    function mostrarAjustes() {
-      camposAjustes.forEach(k => { document.getElementById('aj_' + k).value = ajustes[k]; });
-    }
-
     function reevaluarJornada() {
       jornada().forEach(p => {
         if (!p.tot.res) p.tot = evaluarMercado(p.tot.edge, p.tot.momio, ajustes.sigmaTot, ajustes.topeTot);
@@ -1033,29 +952,10 @@
     function aplicarAjustes(nuevos) {
       ajustes = nuevos;
       localStorage.setItem('nbaAjustesModelo', JSON.stringify(ajustes));
-      mostrarAjustes();
       reevaluarJornada();
       actualizarEstadoMemoria();
       guardarYRenderizar();
     }
-
-    document.getElementById('btnGuardarAjustes').addEventListener('click', function() {
-      const nuevos = {};
-      for (const k of camposAjustes) {
-        const v = parseFloat(document.getElementById('aj_' + k).value);
-        if (isNaN(v)) return alert('Revisa los ajustes: hay un campo vacío o inválido.');
-        nuevos[k] = v;
-      }
-      if (nuevos.pesoL10 < 0 || nuevos.pesoL10 > 100) return alert('El peso de últimos 10 debe estar entre 0 y 100.');
-      if (nuevos.sigmaTot <= 0 || nuevos.sigmaHc <= 0) return alert('Las desviaciones deben ser mayores a 0.');
-      if (nuevos.probFuerte < nuevos.probMin) return alert('La probabilidad para "FUERTE" debe ser mayor o igual a la mínima.');
-      aplicarAjustes(nuevos);
-      alert('✅ Ajustes guardados. Se recalcularon los picks sin resultado de la jornada.');
-    });
-
-    document.getElementById('btnRestablecerAjustes').addEventListener('click', function() {
-      if (confirm('¿Regresar todos los ajustes a sus valores originales?')) aplicarAjustes({ ...AJUSTES_DEFAULT });
-    });
 
     // ================== RÉCORD ==================
     function actualizarRecord() {
@@ -1322,9 +1222,7 @@
       const paceB = num('paceB'), offB = num('offB'), defB = num('defB');
       const descA = parseInt(document.getElementById('descA').value, 10);
       const descB = parseInt(document.getElementById('descB').value, 10);
-      const bajaOffA = num('bajaOffA') || 0, bajaDefA = num('bajaDefA') || 0;
-      const bajaOffB = num('bajaOffB') || 0, bajaDefB = num('bajaDefB') || 0;
-      const tresA = chk('tresA'), tresB = chk('tresB'), giraB = chk('giraB');
+      const giraB = chk('giraB');
 
       const linea = num('lineaCasino');
       const handicap = num('handicapCasino');
@@ -1342,26 +1240,20 @@
       if (!baseDatosEquipos[eqB]) baseDatosEquipos[eqB] = { l10: { pace: paceB, off: offB, def: defB } };
       localStorage.setItem('nbaEquiposStatsDB', JSON.stringify(baseDatosEquipos));
 
-      // 1. Bajas: bajan el ataque propio y empeoran la defensa propia
-      const offRealA = offA - bajaOffA, defRealA = defA + bajaDefA;
-      const offRealB = offB - bajaOffB, defRealB = defB + bajaDefB;
-
-      // 2. Ritmo del partido (baja si alguno viene en B2B)
+      // 1. Ritmo del partido (baja si alguno viene en B2B)
       let ritmo = (paceA + paceB) / 2;
       if (descA === 0) ritmo -= RITMO_B2B;
       if (descB === 0) ritmo -= RITMO_B2B;
 
-      // 3. Puntos por 100 posesiones ajustados a la media de la liga
-      const ptsA100 = offRealA + defRealB - mediaLiga;
-      const ptsB100 = offRealB + defRealA - mediaLiga;
+      // 2. Puntos por 100 posesiones ajustados a la media de la liga
+      const ptsA100 = offA + defB - mediaLiga;
+      const ptsB100 = offB + defA - mediaLiga;
 
-      // 4. Localía repartida (no infla el total) + descanso, altura, giras
+      // 3. Localía repartida (no infla el total) + descanso, altura, giras
       const altura = EQUIPOS_ALTURA.includes(eqA);
-      const proyA = (ptsA100 / 100) * ritmo + ajustes.localia / 2
-                    + PTS_DESCANSO[descA] - (tresA ? PTS_TRES_EN_CUATRO : 0);
+      const proyA = (ptsA100 / 100) * ritmo + ajustes.localia / 2 + PTS_DESCANSO[descA];
       const proyB = (ptsB100 / 100) * ritmo - ajustes.localia / 2
-                    + PTS_DESCANSO[descB] - (tresB ? PTS_TRES_EN_CUATRO : 0)
-                    - (giraB ? PTS_GIRA : 0) - (altura ? PTS_ALTURA : 0);
+                    + PTS_DESCANSO[descB] - (giraB ? PTS_GIRA : 0) - (altura ? PTS_ALTURA : 0);
 
       const proyeccionTotal = proyA + proyB;
       const margen = proyA - proyB;
@@ -1377,10 +1269,6 @@
       const descTxt = d => (d === 0 ? 'B2B' : `${d === 3 ? '3+' : d}d descanso`);
       if (descA !== 1) notas.push(`😴${eqA} ${descTxt(descA)}`);
       if (descB !== 1) notas.push(`😴${eqB} ${descTxt(descB)}`);
-      if (bajaOffA || bajaDefA) notas.push(`🚑${eqA} −${bajaOffA}/+${bajaDefA}`);
-      if (bajaOffB || bajaDefB) notas.push(`🚑${eqB} −${bajaOffB}/+${bajaDefB}`);
-      if (tresA) notas.push(`🔁${eqA} 3en4`);
-      if (tresB) notas.push(`🔁${eqB} 3en4`);
       if (giraB) notas.push(`✈️${eqB} gira`);
       if (altura) notas.push(`🏔️ Altura`);
 
@@ -1406,7 +1294,6 @@
     });
 
     // ================== INICIO ==================
-    mostrarAjustes();
     actualizarEstadoMemoria();
     guardarYRenderizar();
   </script>
