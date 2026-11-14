@@ -382,12 +382,81 @@
       text-align: center;
       padding: 1rem;
     }
+
+    /* Nuevos estilos: empates, revisar, ajustes, historial */
+    .btn-grade.active-push {
+      opacity: 1;
+      background-color: #1e3a8a;
+      border-color: #60a5fa;
+    }
+
+    .badge-review {
+      background-color: #78350f;
+      color: #fcd34d;
+      border: 1px solid #f59e0b;
+    }
+
+    .pick-meta {
+      display: block;
+      font-size: 0.72rem;
+      color: #94a3b8;
+      margin-top: 0.25rem;
+    }
+
+    .hint {
+      font-size: 0.72rem;
+      color: #64748b;
+    }
+
+    .fuente {
+      font-size: 0.7rem;
+      color: #4ade80;
+    }
+
+    .btn-secondary {
+      padding: 0.5rem 0.9rem;
+      background-color: #334155;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.8rem;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      background-color: #475569;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    details.secundario {
+      border-color: #475569;
+    }
+
+    details.secundario summary {
+      color: #cbd5e1;
+    }
+
+    .modifiers-row .form-group {
+      min-width: 150px;
+    }
+
+    .unidades-pos { color: #4ade80; }
+    .unidades-neg { color: #f87171; }
+
     /* Ajustes para celular */
     @media (max-width: 600px) {
       body { padding: 1rem 0.5rem; }
       .card { padding: 0.9rem; }
       h1 { font-size: 1.25rem; }
       input, select { font-size: 16px; }
+      summary { flex-wrap: wrap; gap: 0.4rem; }
+      .modifiers-row { gap: 0.9rem; }
     }
   </style>
 </head>
@@ -396,19 +465,23 @@
   <div class="container">
     <h1>Modelo Predictivo NBA Pro (Eficiencia Ajustada + Pace)</h1>
 
-    <!-- PANEL DE RÉCORD DE ACIERTOS -->
+    <!-- PANEL DE RÉCORD (incluye historial) -->
     <div class="card stats-bar">
       <div class="stat-box">
-        <div class="stat-title">Récord Totales (O/U)</div>
-        <div class="stat-value" id="recTotalesTxt">0 - 0 (0%)</div>
+        <div class="stat-title">Récord Totales (G-P-E)</div>
+        <div class="stat-value" id="recTotalesTxt">0-0-0 (0%)</div>
       </div>
       <div class="stat-box">
-        <div class="stat-title">Récord Hándicap</div>
-        <div class="stat-value" id="recHandicapTxt">0 - 0 (0%)</div>
+        <div class="stat-title">Récord Hándicap (G-P-E)</div>
+        <div class="stat-value" id="recHandicapTxt">0-0-0 (0%)</div>
       </div>
       <div class="stat-box">
         <div class="stat-title">Efectividad Global</div>
-        <div class="stat-value" id="recGlobalTxt" style="color: #4ade80;">0 - 0 (0%)</div>
+        <div class="stat-value" id="recGlobalTxt" style="color: #4ade80;">0-0-0 (0%)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">Unidades (ROI)</div>
+        <div class="stat-value" id="recUnidadesTxt">0.00 u (0%)</div>
       </div>
     </div>
 
@@ -420,10 +493,70 @@
       </summary>
       <div class="importer-body">
         <p style="font-size: 0.8rem; color: #94a3b8;">
-          En la tabla de <strong>Advanced Stats</strong> de NBA.com (filtrada por últimos 10 partidos), selecciona desde el primer hasta el último equipo, cópialo (<code>Ctrl + C</code>) y pégalo aquí abajo. Al elegir un equipo en el formulario, sus datos se llenarán solos.
+          En la tabla de <strong>Advanced Stats</strong> de NBA.com, selecciona desde el primer hasta el último equipo, cópialo (<code>Ctrl + C</code>) y pégalo aquí abajo.
+          Importa <strong>dos veces</strong>: una con el filtro de <strong>temporada completa</strong> y otra con <strong>últimos 10 partidos</strong>. El modelo mezcla ambas (por defecto 70% temporada / 30% últimos 10).
         </p>
+        <div class="form-group" style="max-width: 320px;">
+          <label>¿Qué datos estás pegando?</label>
+          <select id="tipoImportar">
+            <option value="season">Temporada completa</option>
+            <option value="l10">Últimos 10 partidos</option>
+          </select>
+        </div>
         <textarea id="textoImportar" placeholder="Pega aquí las filas copiadas de la tabla avanzada de NBA.com..."></textarea>
         <button type="button" id="btnImportar" class="btn-add" style="background-color: #10b981;">Procesar y Guardar Estadísticas de Equipos</button>
+      </div>
+    </details>
+
+    <!-- AJUSTES DEL MODELO -->
+    <details class="secundario">
+      <summary>
+        <span>⚙️ Ajustes del Modelo</span>
+        <span class="hint">Probabilidades, umbrales y localía</span>
+      </summary>
+      <div class="importer-body">
+        <div class="grid-form">
+          <div class="form-group">
+            <label>Peso últimos 10 (%)</label>
+            <input type="number" step="5" min="0" max="100" id="aj_pesoL10">
+          </div>
+          <div class="form-group">
+            <label>Ventaja de localía (pts de margen)</label>
+            <input type="number" step="0.1" min="0" id="aj_localia">
+          </div>
+          <div class="form-group">
+            <label>Desviación totales (σ, pts)</label>
+            <input type="number" step="0.5" min="1" id="aj_sigmaTot">
+          </div>
+          <div class="form-group">
+            <label>Desviación hándicap (σ, pts)</label>
+            <input type="number" step="0.5" min="1" id="aj_sigmaHc">
+          </div>
+          <div class="form-group">
+            <label>Probabilidad mínima para apostar (%)</label>
+            <input type="number" step="0.5" min="50" max="99" id="aj_probMin">
+          </div>
+          <div class="form-group">
+            <label>Probabilidad para "FUERTE" (%)</label>
+            <input type="number" step="0.5" min="50" max="99" id="aj_probFuerte">
+          </div>
+          <div class="form-group">
+            <label>Tope de ventaja totales (pts)</label>
+            <input type="number" step="0.5" min="1" id="aj_topeTot">
+          </div>
+          <div class="form-group">
+            <label>Tope de ventaja hándicap (pts)</label>
+            <input type="number" step="0.5" min="1" id="aj_topeHc">
+          </div>
+        </div>
+        <p class="hint">
+          Con momio -110 necesitas más de 52.4% solo para no perder. Si la ventaja supera el tope, el pick se marca como "REVISAR NOTICIAS"
+          porque casi siempre significa que falta información (lesiones, descansos). Al guardar, se recalculan los picks de la jornada que aún no tienen resultado.
+        </p>
+        <div class="toolbar">
+          <button type="button" id="btnGuardarAjustes" class="btn-secondary" style="background-color: #0284c7; border-color: #0284c7;">Guardar Ajustes</button>
+          <button type="button" id="btnRestablecerAjustes" class="btn-secondary">Restablecer Valores</button>
+        </div>
       </div>
     </details>
 
@@ -434,7 +567,7 @@
         <div class="team-section">
           <div class="grid-form">
             <div class="form-group">
-              <label>Equipo Local</label>
+              <label>Equipo Local <span class="fuente" id="fuenteA"></span></label>
               <select id="eqA" required>
                 <option value="" disabled selected>Seleccione Local...</option>
               </select>
@@ -453,11 +586,25 @@
             </div>
           </div>
           <div class="modifiers-row">
+            <div class="form-group">
+              <label>😴 Días de descanso</label>
+              <select id="descA">
+                <option value="0">0 (jugó ayer, B2B)</option>
+                <option value="1" selected>1 día</option>
+                <option value="2">2 días</option>
+                <option value="3">3+ días</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>🚑 Bajas: −OFFRTG</label>
+              <input type="number" step="0.5" min="0" max="15" id="bajaOffA" value="0">
+            </div>
+            <div class="form-group">
+              <label>🚑 Bajas: +DEFRTG</label>
+              <input type="number" step="0.5" min="0" max="15" id="bajaDefA" value="0">
+            </div>
             <label class="checkbox-label">
-              <input type="checkbox" id="b2bA"> ⚡ Jugó ayer (Back-to-Back: -1.5 pts y menor ritmo)
-            </label>
-            <label class="checkbox-label">
-              <input type="checkbox" id="starA"> 🚑 Baja de Estrella Titular (-3.5 OFFRTG)
+              <input type="checkbox" id="tresA"> 🔁 3er juego en 4 noches
             </label>
           </div>
         </div>
@@ -466,7 +613,7 @@
         <div class="team-section">
           <div class="grid-form">
             <div class="form-group">
-              <label>Equipo Visitante</label>
+              <label>Equipo Visitante <span class="fuente" id="fuenteB"></span></label>
               <select id="eqB" required>
                 <option value="" disabled selected>Seleccione Visita...</option>
               </select>
@@ -485,14 +632,36 @@
             </div>
           </div>
           <div class="modifiers-row">
+            <div class="form-group">
+              <label>😴 Días de descanso</label>
+              <select id="descB">
+                <option value="0">0 (jugó ayer, B2B)</option>
+                <option value="1" selected>1 día</option>
+                <option value="2">2 días</option>
+                <option value="3">3+ días</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>🚑 Bajas: −OFFRTG</label>
+              <input type="number" step="0.5" min="0" max="15" id="bajaOffB" value="0">
+            </div>
+            <div class="form-group">
+              <label>🚑 Bajas: +DEFRTG</label>
+              <input type="number" step="0.5" min="0" max="15" id="bajaDefB" value="0">
+            </div>
             <label class="checkbox-label">
-              <input type="checkbox" id="b2bB"> ⚡ Jugó ayer (Back-to-Back: -1.5 pts y menor ritmo)
+              <input type="checkbox" id="tresB"> 🔁 3er juego en 4 noches
             </label>
             <label class="checkbox-label">
-              <input type="checkbox" id="starB"> 🚑 Baja de Estrella Titular (-3.5 OFFRTG)
+              <input type="checkbox" id="giraB"> ✈️ Gira larga (4.º+ juego seguido de visita)
             </label>
           </div>
         </div>
+
+        <p class="hint" style="margin-bottom: 1rem;">
+          🚑 Guía de bajas: estrella ≈ 3 a 7 pts, titular ≈ 1 a 3 pts, suplente ≈ 0 a 1. Pon 0 si el jugador ya llevaba varios partidos fuera (sus estadísticas ya lo reflejan).
+          🏔️ La altura se aplica sola cuando el local es DEN o UTA.
+        </p>
 
         <!-- LÍNEAS DEL CASINO Y MEDIA DE LIGA -->
         <div class="casino-group">
@@ -501,11 +670,23 @@
             <input type="number" step="0.5" id="lineaCasino" placeholder="Ej. 229.5" required>
           </div>
           <div class="form-group">
+            <label style="color: #cbd5e1; font-weight: bold;">Momio Totales</label>
+            <input type="number" step="1" id="momioTot" value="-110" required>
+          </div>
+          <div class="form-group">
             <label style="color: #cbd5e1; font-weight: bold;">Hándicap Equipo Local</label>
             <input type="number" step="0.5" id="handicapCasino" placeholder="Ej. -4.5 o +3.5" required>
           </div>
           <div class="form-group">
-            <label style="color: #94a3b8;">Rating Promedio NBA (Constante)</label>
+            <label style="color: #cbd5e1; font-weight: bold;">Momio Hándicap</label>
+            <input type="number" step="1" id="momioHc" value="-110" required>
+          </div>
+          <div class="form-group">
+            <label style="color: #cbd5e1; font-weight: bold;">Unidades por Apuesta</label>
+            <input type="number" step="0.5" min="0.5" id="unidades" value="1" required>
+          </div>
+          <div class="form-group">
+            <label style="color: #94a3b8;">Rating Promedio NBA (se calcula solo)</label>
             <input type="number" step="0.1" id="mediaLiga" value="114.5" required>
           </div>
         </div>
@@ -514,11 +695,11 @@
       </form>
     </div>
 
-    <!-- TABLA DE REGISTROS -->
+    <!-- TABLA DE LA JORNADA -->
     <div class="card" style="overflow-x: auto;">
       <div class="header-tabla">
         <h2 style="margin-bottom: 0;">📊 Partidos de la Jornada</h2>
-        <button type="button" id="btnLimpiarTodo" class="btn-clear">🗑️ Borrar Toda la Lista</button>
+        <button type="button" id="btnCerrarJornada" class="btn-clear" style="background-color: #0284c7;">📥 Cerrar Jornada (guardar en historial)</button>
       </div>
       <table id="tablaResumen">
         <thead>
@@ -548,14 +729,48 @@
 
     <!-- SECCIÓN TOP 3 MEJORES JUGADAS -->
     <div class="card">
-      <h2>🏆 Top 3 Mejores Jugadas a Tomar (Excluye Zona de No Apuesta)</h2>
+      <h2>🏆 Top 3 Mejores Jugadas (ordenadas por valor esperado)</h2>
       <div id="contenedorTopPicks" class="top-picks-grid">
       </div>
     </div>
+
+    <!-- HISTORIAL -->
+    <details class="secundario">
+      <summary>
+        <span>📚 Historial de Picks</span>
+        <span class="hint" id="contadorHistorial">0 partidos</span>
+      </summary>
+      <div class="importer-body">
+        <div class="toolbar">
+          <button type="button" id="btnExportar" class="btn-secondary">💾 Descargar Respaldo</button>
+          <button type="button" id="btnImportarRespaldo" class="btn-secondary">📂 Cargar Respaldo</button>
+          <button type="button" id="btnBorrarHistorial" class="btn-clear">🗑️ Borrar Historial</button>
+          <input type="file" id="archivoRespaldo" accept=".json,application/json" style="display: none;">
+        </div>
+        <p class="hint">Tus datos viven en este navegador. Descarga un respaldo de vez en cuando para no perderlos, o para pasarlos a otro dispositivo.</p>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Partido</th>
+                <th class="divisor">Pick Totales</th>
+                <th>Resultado</th>
+                <th class="divisor">Pick Hándicap</th>
+                <th>Resultado</th>
+                <th class="divisor">Unidades</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="cuerpoHistorial"></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
   </div>
 
   <script>
-    // Diccionario de los 30 equipos para el Importador Rápido y Selectores
+    // ================== CONSTANTES ==================
     const mapaEquiposNBA = {
       "Atlanta Hawks": "ATL", "Boston Celtics": "BOS", "Brooklyn Nets": "BKN", "Charlotte Hornets": "CHA",
       "Chicago Bulls": "CHI", "Cleveland Cavaliers": "CLE", "Dallas Mavericks": "DAL", "Denver Nuggets": "DEN",
@@ -573,70 +788,214 @@
       "OKC", "ORL", "PHI", "PHX", "POR", "SAC", "SAS", "TOR", "UTA", "WAS"
     ];
 
+    const EQUIPOS_ALTURA = ['DEN', 'UTA'];
+    const PTS_ALTURA = 1.0;         // castigo al visitante en altura
+    const PTS_GIRA = 0.7;           // castigo por gira larga de visita
+    const PTS_TRES_EN_CUATRO = 0.8; // castigo por 3er juego en 4 noches
+    const RITMO_B2B = 0.6;          // posesiones menos por cada equipo en B2B
+    const PTS_DESCANSO = { 0: -1.5, 1: 0, 2: 0.3, 3: 0.5 };
+
+    // Rangos válidos para el importador
+    const RANGO_RTG = [95, 135];
+    const RANGO_PACE = [90, 115];
+
+    const AJUSTES_DEFAULT = {
+      pesoL10: 30, localia: 2.4, sigmaTot: 18, sigmaHc: 12,
+      probMin: 53.5, probFuerte: 57, topeTot: 8, topeHc: 6
+    };
+
+    // ================== ESTADO ==================
     const selectEqA = document.getElementById('eqA');
     const selectEqB = document.getElementById('eqB');
     const form = document.getElementById('partidoForm');
     const cuerpoTabla = document.getElementById('cuerpoTabla');
+    const cuerpoHistorial = document.getElementById('cuerpoHistorial');
     const contenedorTopPicks = document.getElementById('contenedorTopPicks');
 
-    let partidosGuardados = JSON.parse(localStorage.getItem('nbaPartidosPro')) || [];
+    let ajustes = Object.assign({}, AJUSTES_DEFAULT, JSON.parse(localStorage.getItem('nbaAjustesModelo')) || {});
     let baseDatosEquipos = JSON.parse(localStorage.getItem('nbaEquiposStatsDB')) || {};
+    let partidos = (JSON.parse(localStorage.getItem('nbaPartidosPro')) || []).map(migrarPartido);
 
-    // Poblar selects
+    // Migrar formato viejo de equipos ({off, def, pace}) a {season, l10}
+    for (const [sigla, d] of Object.entries(baseDatosEquipos)) {
+      if (d && typeof d.off === 'number') {
+        baseDatosEquipos[sigla] = { l10: { off: d.off, def: d.def, pace: d.pace } };
+      }
+    }
+
+    // ================== MATEMÁTICAS ==================
+    // Distribución normal acumulada (aproximación de Abramowitz-Stegun)
+    function normalCDF(x) {
+      const t = 1 / (1 + 0.2316419 * Math.abs(x));
+      const d = 0.3989423 * Math.exp(-x * x / 2);
+      const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+      return x > 0 ? 1 - p : p;
+    }
+
+    // Ganancia por cada unidad apostada (momio americano)
+    function gananciaPorUnidad(momio) {
+      return momio < 0 ? 100 / Math.abs(momio) : momio / 100;
+    }
+
+    function probEquilibrio(momio) {
+      return momio < 0 ? Math.abs(momio) / (Math.abs(momio) + 100) : 100 / (momio + 100);
+    }
+
+    function evaluarMercado(edge, momio, sigma, tope) {
+      const prob = normalCDF(Math.abs(edge) / sigma);
+      const ev = prob * gananciaPorUnidad(momio) - (1 - prob);
+      let nivel;
+      if (Math.abs(edge) > tope) nivel = 'revisar';
+      else if (prob * 100 < ajustes.probMin || ev <= 0) nivel = 'pasar';
+      else if (prob * 100 >= ajustes.probFuerte) nivel = 'fuerte';
+      else nivel = 'normal';
+      return { edge, prob, ev, nivel, momio, res: null };
+    }
+
+    function migrarPartido(p) {
+      if (p.v === 2) return p;
+      const tot = evaluarMercado(p.difTotal, -110, ajustes.sigmaTot, ajustes.topeTot);
+      const hc = evaluarMercado(p.difHandicap, -110, ajustes.sigmaHc, ajustes.topeHc);
+      tot.res = tot.nivel === 'pasar' ? null : (p.resTotal || null);
+      hc.res = hc.nivel === 'pasar' ? null : (p.resHc || null);
+      return {
+        v: 2, id: String(Date.now()) + Math.random().toString(36).slice(2, 7),
+        fecha: new Date().toISOString(), archivado: false, unidades: 1,
+        eqA: p.eqA, eqB: p.eqB, linea: p.linea, handicap: p.handicap,
+        proyeccionTotal: p.proyeccionTotal, textoGanador: p.textoGanador,
+        notasAjuste: p.notasAjuste || '', tot, hc
+      };
+    }
+
+    // ================== UTILIDADES ==================
+    const fmtSigno = n => (n > 0 ? '+' + n : '' + n);
+    const fmtPct = x => (x * 100).toFixed(1) + '%';
+    const fmtEV = x => (x >= 0 ? '+' : '') + (x * 100).toFixed(1) + '%';
+    const r2 = n => Math.round(n * 100) / 100;
+
+    function ladoTotales(p) {
+      return p.tot.edge > 0 ? `ALTAS ${p.linea}` : `BAJAS ${p.linea}`;
+    }
+
+    function ladoHandicap(p) {
+      return p.hc.edge > 0 ? `${p.eqA} ${fmtSigno(p.handicap)}` : `${p.eqB} ${fmtSigno(-p.handicap)}`;
+    }
+
+    function resultadoUnidades(m, unidades) {
+      if (m.nivel === 'pasar' || !m.res) return 0;
+      if (m.res === 'W') return unidades * gananciaPorUnidad(m.momio);
+      if (m.res === 'L') return -unidades;
+      return 0;
+    }
+
+    function jornada() { return partidos.filter(p => !p.archivado); }
+    function historial() { return partidos.filter(p => p.archivado); }
+
+    function guardarPartidos() {
+      localStorage.setItem('nbaPartidosPro', JSON.stringify(partidos));
+    }
+
+    // ================== EQUIPOS ==================
     equiposNBA.forEach(eq => {
       selectEqA.add(new Option(eq, eq));
       selectEqB.add(new Option(eq, eq));
     });
 
-    // Actualizar contador de equipos importados
+    // Mezcla temporada completa + últimos 10
+    function statsEquipo(sigla) {
+      const d = baseDatosEquipos[sigla];
+      if (!d) return null;
+      const w = ajustes.pesoL10 / 100;
+      if (d.season && d.l10) {
+        return {
+          pace: r2(d.season.pace * (1 - w) + d.l10.pace * w),
+          off: r2(d.season.off * (1 - w) + d.l10.off * w),
+          def: r2(d.season.def * (1 - w) + d.l10.def * w),
+          fuente: `Mezcla ${100 - ajustes.pesoL10}/${ajustes.pesoL10}`
+        };
+      }
+      if (d.season) return { ...d.season, fuente: 'Solo temporada' };
+      if (d.l10) return { ...d.l10, fuente: 'Solo últimos 10' };
+      return null;
+    }
+
     function actualizarEstadoMemoria() {
-      const cant = Object.keys(baseDatosEquipos).length;
-      document.getElementById('estadoMemoria').textContent = `${cant}/30 equipos guardados en memoria`;
-      if (cant > 0) {
-        let sumaOff = 0;
-        Object.values(baseDatosEquipos).forEach(d => sumaOff += d.off);
-        document.getElementById('mediaLiga').value = (sumaOff / cant).toFixed(1);
+      const siglas = Object.keys(baseDatosEquipos);
+      const nSeason = siglas.filter(s => baseDatosEquipos[s].season).length;
+      const nL10 = siglas.filter(s => baseDatosEquipos[s].l10).length;
+      document.getElementById('estadoMemoria').textContent =
+        `Temporada: ${nSeason}/30 · Últimos 10: ${nL10}/30`;
+
+      const stats = siglas.map(statsEquipo).filter(Boolean);
+      if (stats.length > 0) {
+        const suma = stats.reduce((acc, s) => acc + s.off, 0);
+        document.getElementById('mediaLiga').value = (suma / stats.length).toFixed(1);
       }
     }
 
-    // Importador Rápido desde texto pegado de NBA.com
+    // Importador con validación de rangos
     document.getElementById('btnImportar').addEventListener('click', function() {
       const texto = document.getElementById('textoImportar').value;
+      const tipo = document.getElementById('tipoImportar').value;
       if (!texto.trim()) return alert("Pega primero el texto de la tabla de NBA.com");
 
       let importados = 0;
+      const rechazados = [];
+      const enRango = (v, [min, max]) => !isNaN(v) && v >= min && v <= max;
+
       for (const [nombreCompleto, sigla] of Object.entries(mapaEquiposNBA)) {
         const idx = texto.indexOf(nombreCompleto);
-        if (idx !== -1) {
-          const fragmento = texto.slice(idx + nombreCompleto.length, idx + nombreCompleto.length + 220);
-          const numeros = fragmento.match(/-?\d+(\.\d+)?/g);
-          // En NBA.com Advanced Stats: [4] = OFFRTG, [5] = DEFRTG, [16] = PACE
-          if (numeros && numeros.length >= 17) {
-            baseDatosEquipos[sigla] = {
-              off: parseFloat(numeros[4]),
-              def: parseFloat(numeros[5]),
-              pace: parseFloat(numeros[16])
-            };
-            importados++;
-          }
+        if (idx === -1) continue;
+        const fragmento = texto.slice(idx + nombreCompleto.length, idx + nombreCompleto.length + 220);
+        const numeros = fragmento.match(/-?\d+(\.\d+)?/g);
+        // En NBA.com Advanced Stats: [4] = OFFRTG, [5] = DEFRTG, [16] = PACE
+        if (!numeros || numeros.length < 17) { rechazados.push(sigla); continue; }
+
+        const off = parseFloat(numeros[4]);
+        const def = parseFloat(numeros[5]);
+        const pace = parseFloat(numeros[16]);
+
+        if (enRango(off, RANGO_RTG) && enRango(def, RANGO_RTG) && enRango(pace, RANGO_PACE)) {
+          baseDatosEquipos[sigla] = baseDatosEquipos[sigla] || {};
+          baseDatosEquipos[sigla][tipo] = { off, def, pace };
+          importados++;
+        } else {
+          rechazados.push(sigla);
         }
       }
 
+      const nombreTipo = tipo === 'season' ? 'temporada completa' : 'últimos 10';
       if (importados > 0) {
         localStorage.setItem('nbaEquiposStatsDB', JSON.stringify(baseDatosEquipos));
         actualizarEstadoMemoria();
         document.getElementById('textoImportar').value = '';
-        alert(`✅ ¡Éxito! Se importaron automáticamente las estadísticas de ${importados} equipos.`);
+        let msg = `✅ Se importaron los datos de ${nombreTipo} de ${importados} equipos.`;
+        if (rechazados.length) {
+          msg += `\n\n⚠️ Se ignoraron ${rechazados.length} equipos con números fuera de rango (${rechazados.join(', ')}). ` +
+                 `Puede que NBA.com haya cambiado las columnas: revisa esos equipos a mano.`;
+        }
+        alert(msg);
+      } else if (rechazados.length) {
+        alert(`⚠️ Se encontraron equipos, pero sus números no tienen sentido (OFFRTG/DEFRTG entre ${RANGO_RTG.join('-')}, PACE entre ${RANGO_PACE.join('-')}). ` +
+              `Es posible que NBA.com haya cambiado el orden de las columnas. No se guardó nada.`);
       } else {
         alert("⚠️ No se detectaron equipos. Asegúrate de copiar las filas completas desde la tabla Advanced Stats de NBA.com.");
       }
     });
 
-    // Autocompletar al elegir equipo y bloquear duplicados
+    function rellenarEquipo(sigla, sufijo) {
+      const s = statsEquipo(sigla);
+      document.getElementById('fuente' + sufijo).textContent = s ? `· ${s.fuente}` : '';
+      if (s) {
+        document.getElementById('pace' + sufijo).value = s.pace;
+        document.getElementById('off' + sufijo).value = s.off;
+        document.getElementById('def' + sufijo).value = s.def;
+      }
+    }
+
     function actualizarOpciones() {
       const usados = new Set();
-      partidosGuardados.forEach(p => { usados.add(p.eqA); usados.add(p.eqB); });
-
+      jornada().forEach(p => { usados.add(p.eqA); usados.add(p.eqB); });
       const valA = selectEqA.value;
       const valB = selectEqB.value;
 
@@ -646,7 +1005,6 @@
           opt.disabled = bloq; opt.hidden = bloq;
         }
       });
-
       Array.from(selectEqB.options).forEach(opt => {
         if (opt.value !== "") {
           const bloq = usados.has(opt.value) || (opt.value === valA);
@@ -655,286 +1013,400 @@
       });
     }
 
-    selectEqA.addEventListener('change', function() {
-      actualizarOpciones();
-      const d = baseDatosEquipos[this.value];
-      if (d) {
-        document.getElementById('paceA').value = d.pace;
-        document.getElementById('offA').value = d.off;
-        document.getElementById('defA').value = d.def;
+    selectEqA.addEventListener('change', function() { actualizarOpciones(); rellenarEquipo(this.value, 'A'); });
+    selectEqB.addEventListener('change', function() { actualizarOpciones(); rellenarEquipo(this.value, 'B'); });
+
+    // ================== AJUSTES ==================
+    const camposAjustes = Object.keys(AJUSTES_DEFAULT);
+
+    function mostrarAjustes() {
+      camposAjustes.forEach(k => { document.getElementById('aj_' + k).value = ajustes[k]; });
+    }
+
+    function reevaluarJornada() {
+      jornada().forEach(p => {
+        if (!p.tot.res) p.tot = evaluarMercado(p.tot.edge, p.tot.momio, ajustes.sigmaTot, ajustes.topeTot);
+        if (!p.hc.res) p.hc = evaluarMercado(p.hc.edge, p.hc.momio, ajustes.sigmaHc, ajustes.topeHc);
+      });
+    }
+
+    function aplicarAjustes(nuevos) {
+      ajustes = nuevos;
+      localStorage.setItem('nbaAjustesModelo', JSON.stringify(ajustes));
+      mostrarAjustes();
+      reevaluarJornada();
+      actualizarEstadoMemoria();
+      guardarYRenderizar();
+    }
+
+    document.getElementById('btnGuardarAjustes').addEventListener('click', function() {
+      const nuevos = {};
+      for (const k of camposAjustes) {
+        const v = parseFloat(document.getElementById('aj_' + k).value);
+        if (isNaN(v)) return alert('Revisa los ajustes: hay un campo vacío o inválido.');
+        nuevos[k] = v;
       }
+      if (nuevos.pesoL10 < 0 || nuevos.pesoL10 > 100) return alert('El peso de últimos 10 debe estar entre 0 y 100.');
+      if (nuevos.sigmaTot <= 0 || nuevos.sigmaHc <= 0) return alert('Las desviaciones deben ser mayores a 0.');
+      if (nuevos.probFuerte < nuevos.probMin) return alert('La probabilidad para "FUERTE" debe ser mayor o igual a la mínima.');
+      aplicarAjustes(nuevos);
+      alert('✅ Ajustes guardados. Se recalcularon los picks sin resultado de la jornada.');
     });
 
-    selectEqB.addEventListener('change', function() {
-      actualizarOpciones();
-      const d = baseDatosEquipos[this.value];
-      if (d) {
-        document.getElementById('paceB').value = d.pace;
-        document.getElementById('offB').value = d.off;
-        document.getElementById('defB').value = d.def;
-      }
+    document.getElementById('btnRestablecerAjustes').addEventListener('click', function() {
+      if (confirm('¿Regresar todos los ajustes a sus valores originales?')) aplicarAjustes({ ...AJUSTES_DEFAULT });
     });
 
-    // Calcular y actualizar el panel de Récord
+    // ================== RÉCORD ==================
     function actualizarRecord() {
-      let wTot = 0, lTot = 0, wHc = 0, lHc = 0;
+      const c = { tot: { W: 0, L: 0, P: 0 }, hc: { W: 0, L: 0, P: 0 } };
+      let unidadesNetas = 0, unidadesApostadas = 0;
 
-      partidosGuardados.forEach(p => {
-        if (p.resTotal === 'W') wTot++;
-        if (p.resTotal === 'L') lTot++;
-        if (p.resHc === 'W') wHc++;
-        if (p.resHc === 'L') lHc++;
+      partidos.forEach(p => {
+        ['tot', 'hc'].forEach(k => {
+          const m = p[k];
+          if (m.nivel === 'pasar' || !m.res) return;
+          c[k][m.res]++;
+          unidadesApostadas += p.unidades;
+          unidadesNetas += resultadoUnidades(m, p.unidades);
+        });
       });
 
-      const pctTot = (wTot + lTot) > 0 ? ((wTot / (wTot + lTot)) * 100).toFixed(1) : 0;
-      const pctHc = (wHc + lHc) > 0 ? ((wHc / (wHc + lHc)) * 100).toFixed(1) : 0;
-      const wGlob = wTot + wHc;
-      const lGlob = lTot + lHc;
-      const pctGlob = (wGlob + lGlob) > 0 ? ((wGlob / (wGlob + lGlob)) * 100).toFixed(1) : 0;
+      const txt = r => {
+        const pct = (r.W + r.L) > 0 ? (r.W / (r.W + r.L) * 100).toFixed(1) : 0;
+        return `${r.W}-${r.L}-${r.P} (${pct}%)`;
+      };
+      const glob = { W: c.tot.W + c.hc.W, L: c.tot.L + c.hc.L, P: c.tot.P + c.hc.P };
 
-      document.getElementById('recTotalesTxt').textContent = `${wTot} - ${lTot} (${pctTot}%)`;
-      document.getElementById('recHandicapTxt').textContent = `${wHc} - ${lHc} (${pctHc}%)`;
-      document.getElementById('recGlobalTxt').textContent = `${wGlob} - ${lGlob} (${pctGlob}%)`;
+      document.getElementById('recTotalesTxt').textContent = txt(c.tot);
+      document.getElementById('recHandicapTxt').textContent = txt(c.hc);
+      document.getElementById('recGlobalTxt').textContent = txt(glob);
+
+      const roi = unidadesApostadas > 0 ? (unidadesNetas / unidadesApostadas * 100).toFixed(1) : 0;
+      const el = document.getElementById('recUnidadesTxt');
+      el.textContent = `${unidadesNetas >= 0 ? '+' : ''}${unidadesNetas.toFixed(2)} u (${roi}%)`;
+      el.style.color = unidadesNetas > 0 ? '#4ade80' : (unidadesNetas < 0 ? '#f87171' : '#38bdf8');
     }
 
-    function guardarYRenderizar() {
-      localStorage.setItem('nbaPartidosPro', JSON.stringify(partidosGuardados));
-      renderizarTabla();
-      renderizarTopPicks();
-      actualizarOpciones();
-      actualizarRecord();
-    }
-
-    // Marcar Acierto (W) o Fallo (L)
-    window.calificarPick = function(index, mercado, resultado) {
-      if (mercado === 'total') {
-        partidosGuardados[index].resTotal = (partidosGuardados[index].resTotal === resultado) ? null : resultado;
-      } else {
-        partidosGuardados[index].resHc = (partidosGuardados[index].resHc === resultado) ? null : resultado;
+    // ================== RENDER ==================
+    function badgePick(m, texto, colorBase, fondoFuerte) {
+      if (m.nivel === 'pasar') {
+        return `<span class="badge badge-pass">⚠️ PASAR (Sin Valor)</span>
+                <span class="pick-meta">${texto} · ${fmtPct(m.prob)} · EV ${fmtEV(m.ev)}</span>`;
       }
-      guardarYRenderizar();
-    };
+      if (m.nivel === 'revisar') {
+        return `<span class="badge badge-review">🔎 REVISAR NOTICIAS</span>
+                <span class="pick-meta">${texto}: ventaja de ${Math.abs(m.edge).toFixed(1)} pts, sospechosamente grande</span>`;
+      }
+      const etiqueta = m.nivel === 'fuerte'
+        ? `<span class="badge" style="background: ${fondoFuerte}; color: ${colorBase};">🔥 FUERTE ${texto}</span>`
+        : `<span class="badge" style="color: ${colorBase};">${texto}</span>`;
+      return `${etiqueta}<span class="pick-meta">${fmtPct(m.prob)} · EV ${fmtEV(m.ev)} · momio ${fmtSigno(m.momio)}</span>`;
+    }
+
+    function badgeTotales(p) {
+      const altas = p.tot.edge > 0;
+      return badgePick(p.tot, ladoTotales(p), altas ? '#86efac' : '#fca5a5', altas ? '#14532d' : '#7f1d1d');
+    }
+
+    function badgeHandicap(p) {
+      return badgePick(p.hc, ladoHandicap(p), '#c4b5fd', '#4c1d95');
+    }
+
+    function botonesResultado(p, mercado) {
+      const m = p[mercado];
+      if (m.nivel === 'pasar') return `<span class="hint">—</span>`;
+      const b = (res, icono, clase, titulo) =>
+        `<button class="btn-grade ${m.res === res ? clase : ''}" title="${titulo}" onclick="calificarPick('${p.id}', '${mercado}', '${res}')">${icono}</button>`;
+      return `<div class="grade-group">
+                ${b('W', '✅', 'active-win', 'Ganada')}
+                ${b('L', '❌', 'active-loss', 'Perdida')}
+                ${b('P', '🔁', 'active-push', 'Empate (push)')}
+              </div>`;
+    }
 
     function renderizarTabla() {
       cuerpoTabla.innerHTML = '';
+      const lista = jornada();
 
-      if (partidosGuardados.length === 0) {
-        cuerpoTabla.innerHTML = `<tr><td colspan="10" class="empty-msg">No hay partidos registrados en la lista.</td></tr>`;
+      if (lista.length === 0) {
+        cuerpoTabla.innerHTML = `<tr><td colspan="10" class="empty-msg">No hay partidos registrados en la jornada.</td></tr>`;
         return;
       }
 
-      partidosGuardados.forEach((p, index) => {
-        // Evaluación de Totales con Filtro de Zona de No Apuesta (< 1.5 pts)
-        let recTotal = "";
-        if (Math.abs(p.difTotal) < 1.5) {
-          recTotal = `<span class="badge badge-pass">⚠️ PASAR (Sin Valor)</span>`;
-        } else if (p.difTotal <= -4.0) {
-          recTotal = `<span class="badge" style="background: #7f1d1d; color: #fca5a5;">🔥 FUERTE BAJAS</span>`;
-        } else if (p.difTotal >= 4.0) {
-          recTotal = `<span class="badge" style="background: #14532d; color: #86efac;">🔥 FUERTE ALTAS</span>`;
-        } else if (p.difTotal > 0) {
-          recTotal = `<span class="badge" style="color: #4ade80;">Altas</span>`;
-        } else {
-          recTotal = `<span class="badge" style="color: #f87171;">Bajas</span>`;
-        }
-
-        // Evaluación de Hándicap con Filtro de Zona de No Apuesta (< 1.5 pts)
-        let recHandicap = "";
-        if (Math.abs(p.difHandicap) < 1.5) {
-          recHandicap = `<span class="badge badge-pass">⚠️ PASAR (Sin Valor)</span>`;
-        } else if (p.difHandicap > 3.5) {
-          recHandicap = `<span class="badge" style="background: #4c1d95; color: #c4b5fd;">🔥 FUERTE ${p.eqA}</span>`;
-        } else if (p.difHandicap < -3.5) {
-          recHandicap = `<span class="badge" style="background: #4c1d95; color: #c4b5fd;">🔥 FUERTE ${p.eqB}</span>`;
-        } else if (p.difHandicap > 0) {
-          recHandicap = `<span class="badge" style="color: #a855f7;">Jugar a ${p.eqA}</span>`;
-        } else {
-          recHandicap = `<span class="badge" style="color: #a855f7;">Jugar a ${p.eqB}</span>`;
-        }
-
+      lista.forEach(p => {
         const fila = document.createElement('tr');
         fila.innerHTML = `
           <td>
             <strong>${p.eqA}</strong> vs <strong>${p.eqB}</strong>
-            <div class="tags-info">${p.notasAjuste || 'Sin penalizaciones'}</div>
+            <div class="tags-info">${p.notasAjuste || 'Sin ajustes'}</div>
           </td>
           <td class="divisor"><strong>${p.linea}</strong></td>
           <td style="color:#fcd34d; font-weight:600;">${p.proyeccionTotal.toFixed(1)}</td>
-          <td>${recTotal}</td>
-          <td>
-            <div class="grade-group">
-              <button class="btn-grade ${p.resTotal === 'W' ? 'active-win' : ''}" onclick="calificarPick(${index}, 'total', 'W')">✅</button>
-              <button class="btn-grade ${p.resTotal === 'L' ? 'active-loss' : ''}" onclick="calificarPick(${index}, 'total', 'L')">❌</button>
-            </div>
-          </td>
-          <td class="divisor"><strong>${p.handicap > 0 ? '+' + p.handicap : p.handicap}</strong></td>
+          <td>${badgeTotales(p)}</td>
+          <td>${botonesResultado(p, 'tot')}</td>
+          <td class="divisor"><strong>${fmtSigno(p.handicap)}</strong></td>
           <td style="color:#d8b4fe;">${p.textoGanador}</td>
-          <td>${recHandicap}</td>
-          <td>
-            <div class="grade-group">
-              <button class="btn-grade ${p.resHc === 'W' ? 'active-win' : ''}" onclick="calificarPick(${index}, 'hc', 'W')">✅</button>
-              <button class="btn-grade ${p.resHc === 'L' ? 'active-loss' : ''}" onclick="calificarPick(${index}, 'hc', 'L')">❌</button>
-            </div>
-          </td>
+          <td>${badgeHandicap(p)}</td>
+          <td>${botonesResultado(p, 'hc')}</td>
           <td class="divisor" style="text-align: center;">
-            <button class="btn-delete-row" onclick="eliminarPartido(${index})">Eliminar</button>
+            <button class="btn-delete-row" onclick="eliminarPartido('${p.id}')">Eliminar</button>
           </td>
         `;
         cuerpoTabla.appendChild(fila);
       });
     }
 
+    function renderizarHistorial() {
+      const lista = historial().sort((a, b) => b.fecha.localeCompare(a.fecha));
+      document.getElementById('contadorHistorial').textContent = `${lista.length} partidos`;
+      cuerpoHistorial.innerHTML = '';
+
+      if (lista.length === 0) {
+        cuerpoHistorial.innerHTML = `<tr><td colspan="8" class="empty-msg">Aún no hay jornadas cerradas.</td></tr>`;
+        return;
+      }
+
+      lista.forEach(p => {
+        const u = resultadoUnidades(p.tot, p.unidades) + resultadoUnidades(p.hc, p.unidades);
+        const fecha = new Date(p.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+          <td>${fecha}</td>
+          <td><strong>${p.eqA}</strong> vs <strong>${p.eqB}</strong></td>
+          <td class="divisor">${badgeTotales(p)}</td>
+          <td>${botonesResultado(p, 'tot')}</td>
+          <td class="divisor">${badgeHandicap(p)}</td>
+          <td>${botonesResultado(p, 'hc')}</td>
+          <td class="divisor ${u > 0 ? 'unidades-pos' : (u < 0 ? 'unidades-neg' : '')}"><strong>${u >= 0 ? '+' : ''}${u.toFixed(2)} u</strong></td>
+          <td><button class="btn-delete-row" onclick="eliminarPartido('${p.id}')">Eliminar</button></td>
+        `;
+        cuerpoHistorial.appendChild(fila);
+      });
+    }
+
     function renderizarTopPicks() {
       contenedorTopPicks.innerHTML = '';
+      const candidatas = [];
 
-      let candidatas = [];
-
-      partidosGuardados.forEach(p => {
-        // Solo agregar si supera el filtro de Zona de No Apuesta (>= 1.5 pts de ventaja)
-        if (Math.abs(p.difTotal) >= 1.5) {
+      jornada().forEach(p => {
+        if (p.tot.nivel === 'normal' || p.tot.nivel === 'fuerte') {
           candidatas.push({
-            partido: `${p.eqA} vs ${p.eqB}`,
-            mercado: 'Totales (O/U)',
-            jugada: p.difTotal > 0 ? `ALTAS de ${p.linea}` : `BAJAS de ${p.linea}`,
-            detalle: `Proyección: ${p.proyeccionTotal.toFixed(1)} pts | Línea: ${p.linea}`,
-            ventaja: Math.abs(p.difTotal)
+            partido: `${p.eqA} vs ${p.eqB}`, mercado: 'Totales (O/U)', jugada: ladoTotales(p),
+            detalle: `Proyección: ${p.proyeccionTotal.toFixed(1)} pts | Línea: ${p.linea} | Momio ${fmtSigno(p.tot.momio)}`,
+            m: p.tot
           });
         }
-
-        if (Math.abs(p.difHandicap) >= 1.5) {
-          const hcVisita = -p.handicap;
-          const txtLocal = p.handicap > 0 ? `+${p.handicap}` : `${p.handicap}`;
-          const txtVisita = hcVisita > 0 ? `+${hcVisita}` : `${hcVisita}`;
-
+        if (p.hc.nivel === 'normal' || p.hc.nivel === 'fuerte') {
           candidatas.push({
-            partido: `${p.eqA} vs ${p.eqB}`,
-            mercado: 'Hándicap',
-            jugada: p.difHandicap > 0 ? `${p.eqA} (${txtLocal})` : `${p.eqB} (${txtVisita})`,
-            detalle: `Proyección: ${p.textoGanador}`,
-            ventaja: Math.abs(p.difHandicap)
+            partido: `${p.eqA} vs ${p.eqB}`, mercado: 'Hándicap', jugada: ladoHandicap(p),
+            detalle: `Proyección: ${p.textoGanador} | Momio ${fmtSigno(p.hc.momio)}`,
+            m: p.hc
           });
         }
       });
 
       if (candidatas.length === 0) {
-        contenedorTopPicks.innerHTML = `<div class="empty-msg" style="grid-column: 1 / -1;">No hay jugadas que superen el filtro de seguridad (+1.5 pts de ventaja).</div>`;
+        contenedorTopPicks.innerHTML = `<div class="empty-msg" style="grid-column: 1 / -1;">No hay jugadas que superen la probabilidad mínima (${ajustes.probMin}%) con valor esperado positivo.</div>`;
         return;
       }
 
-      candidatas.sort((a, b) => b.ventaja - a.ventaja);
-      const top3 = candidatas.slice(0, 3);
+      candidatas.sort((a, b) => b.m.ev - a.m.ev);
       const titulos = ['🥇 #1 MEJOR JUGADA DEL DÍA', '🥈 #2 SEGUNDA MEJOR OPCIÓN', '🥉 #3 TERCERA OPCIÓN'];
 
-      top3.forEach((pick, i) => {
+      candidatas.slice(0, 3).forEach((pick, i) => {
         const card = document.createElement('div');
         card.className = 'pick-card';
         card.innerHTML = `
           <span class="pick-rank">${titulos[i]} • ${pick.mercado}</span>
-          <span class="pick-jugada">${pick.jugada}</span>
+          <span class="pick-jugada">${pick.m.nivel === 'fuerte' ? '🔥 ' : ''}${pick.jugada}</span>
           <span class="pick-partido">🏀 ${pick.partido}</span>
           <span class="pick-detalle">${pick.detalle}</span>
-          <span class="pick-ventaja">🔥 Ventaja Matemática: +${pick.ventaja.toFixed(2)} pts</span>
+          <span class="pick-ventaja">Prob. ${fmtPct(pick.m.prob)} · EV ${fmtEV(pick.m.ev)} · Ventaja ${Math.abs(pick.m.edge).toFixed(1)} pts</span>
         `;
         contenedorTopPicks.appendChild(card);
       });
     }
 
-    window.eliminarPartido = function(index) {
-      partidosGuardados.splice(index, 1);
+    function guardarYRenderizar() {
+      guardarPartidos();
+      renderizarTabla();
+      renderizarHistorial();
+      renderizarTopPicks();
+      actualizarOpciones();
+      actualizarRecord();
+    }
+
+    // ================== ACCIONES ==================
+    window.calificarPick = function(id, mercado, resultado) {
+      const p = partidos.find(x => x.id === id);
+      if (!p || p[mercado].nivel === 'pasar') return;
+      p[mercado].res = (p[mercado].res === resultado) ? null : resultado;
       guardarYRenderizar();
     };
 
-    document.getElementById('btnLimpiarTodo').addEventListener('click', function() {
-      if (partidosGuardados.length === 0) return;
-      if (confirm('¿Deseas borrar todos los partidos de la tabla?')) {
-        partidosGuardados = [];
-        guardarYRenderizar();
-      }
+    window.eliminarPartido = function(id) {
+      const p = partidos.find(x => x.id === id);
+      if (!p) return;
+      if (p.archivado && !confirm(`¿Eliminar ${p.eqA} vs ${p.eqB} del historial? Esto cambia tu récord.`)) return;
+      partidos = partidos.filter(x => x.id !== id);
+      guardarYRenderizar();
+    };
+
+    document.getElementById('btnCerrarJornada').addEventListener('click', function() {
+      const lista = jornada();
+      if (lista.length === 0) return;
+      const conResultado = lista.filter(p => p.tot.res || p.hc.res);
+      const sinResultado = lista.length - conResultado.length;
+
+      let msg = `Se guardarán ${conResultado.length} partidos calificados en el historial.`;
+      if (sinResultado > 0) msg += `\n${sinResultado} partidos sin ningún resultado marcado se eliminarán.`;
+      msg += `\n\n¿Cerrar la jornada?`;
+      if (!confirm(msg)) return;
+
+      conResultado.forEach(p => { p.archivado = true; });
+      partidos = partidos.filter(p => p.archivado);
+      guardarYRenderizar();
     });
 
+    document.getElementById('btnBorrarHistorial').addEventListener('click', function() {
+      if (historial().length === 0) return;
+      if (!confirm('¿Borrar TODO el historial? Perderás tu récord acumulado.')) return;
+      if (!confirm('Esta acción no se puede deshacer. Te recomiendo descargar un respaldo antes. ¿Borrar de todos modos?')) return;
+      partidos = jornada();
+      guardarYRenderizar();
+    });
+
+    document.getElementById('btnExportar').addEventListener('click', function() {
+      const datos = { app: 'modelo-nba-pro', version: 2, exportado: new Date().toISOString(), partidos, equipos: baseDatosEquipos, ajustes };
+      const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `respaldo-nba-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    document.getElementById('btnImportarRespaldo').addEventListener('click', () => document.getElementById('archivoRespaldo').click());
+
+    document.getElementById('archivoRespaldo').addEventListener('change', function() {
+      const archivo = this.files[0];
+      if (!archivo) return;
+      const lector = new FileReader();
+      lector.onload = () => {
+        try {
+          const datos = JSON.parse(lector.result);
+          if (!datos || datos.app !== 'modelo-nba-pro' || !Array.isArray(datos.partidos)) throw new Error('formato');
+          if (!confirm(`El respaldo tiene ${datos.partidos.length} partidos. Esto reemplazará tus datos actuales. ¿Continuar?`)) return;
+          partidos = datos.partidos.map(migrarPartido);
+          baseDatosEquipos = datos.equipos || {};
+          localStorage.setItem('nbaEquiposStatsDB', JSON.stringify(baseDatosEquipos));
+          aplicarAjustes(Object.assign({}, AJUSTES_DEFAULT, datos.ajustes || {}));
+          alert('✅ Respaldo cargado.');
+        } catch (e) {
+          alert('⚠️ Ese archivo no es un respaldo válido de esta app.');
+        }
+      };
+      lector.readAsText(archivo);
+      this.value = '';
+    });
+
+    // ================== ANÁLISIS DEL PARTIDO ==================
     form.addEventListener('submit', function(e) {
       e.preventDefault();
+      const num = id => parseFloat(document.getElementById(id).value);
+      const chk = id => document.getElementById(id).checked;
 
-      const eqA = selectEqA.value;
-      const paceA = parseFloat(document.getElementById('paceA').value);
-      const offA = parseFloat(document.getElementById('offA').value);
-      const defA = parseFloat(document.getElementById('defA').value);
-      const b2bA = document.getElementById('b2bA').checked;
-      const starA = document.getElementById('starA').checked;
+      const eqA = selectEqA.value, eqB = selectEqB.value;
+      const paceA = num('paceA'), offA = num('offA'), defA = num('defA');
+      const paceB = num('paceB'), offB = num('offB'), defB = num('defB');
+      const descA = parseInt(document.getElementById('descA').value, 10);
+      const descB = parseInt(document.getElementById('descB').value, 10);
+      const bajaOffA = num('bajaOffA') || 0, bajaDefA = num('bajaDefA') || 0;
+      const bajaOffB = num('bajaOffB') || 0, bajaDefB = num('bajaDefB') || 0;
+      const tresA = chk('tresA'), tresB = chk('tresB'), giraB = chk('giraB');
 
-      const eqB = selectEqB.value;
-      const paceB = parseFloat(document.getElementById('paceB').value);
-      const offB = parseFloat(document.getElementById('offB').value);
-      const defB = parseFloat(document.getElementById('defB').value);
-      const b2bB = document.getElementById('b2bB').checked;
-      const starB = document.getElementById('starB').checked;
+      const linea = num('lineaCasino');
+      const handicap = num('handicapCasino');
+      const momioTot = num('momioTot');
+      const momioHc = num('momioHc');
+      const unidades = num('unidades') || 1;
+      const mediaLiga = num('mediaLiga') || 114.5;
 
-      const linea = parseFloat(document.getElementById('lineaCasino').value);
-      const handicap = parseFloat(document.getElementById('handicapCasino').value);
-      const mediaLiga = parseFloat(document.getElementById('mediaLiga').value) || 114.5;
+      if (Math.abs(momioTot) < 100 || Math.abs(momioHc) < 100) {
+        return alert('Los momios americanos deben ser -100 o menos (ej. -110) o +100 o más (ej. +105).');
+      }
 
-      // Guardar las estadísticas ingresadas en la memoria del equipo
-      baseDatosEquipos[eqA] = { pace: paceA, off: offA, def: defA };
-      baseDatosEquipos[eqB] = { pace: paceB, off: offB, def: defB };
+      // Si el equipo no tenía datos importados, guardar lo capturado a mano
+      if (!baseDatosEquipos[eqA]) baseDatosEquipos[eqA] = { l10: { pace: paceA, off: offA, def: defA } };
+      if (!baseDatosEquipos[eqB]) baseDatosEquipos[eqB] = { l10: { pace: paceB, off: offB, def: defB } };
       localStorage.setItem('nbaEquiposStatsDB', JSON.stringify(baseDatosEquipos));
-      actualizarEstadoMemoria();
 
-      // 1. Penalización por Baja de Estrella (-3.5 puntos en Rating Ofensivo)
-      const offRealA = starA ? (offA - 3.5) : offA;
-      const offRealB = starB ? (offB - 3.5) : offB;
+      // 1. Bajas: bajan el ataque propio y empeoran la defensa propia
+      const offRealA = offA - bajaOffA, defRealA = defA + bajaDefA;
+      const offRealB = offB - bajaOffB, defRealB = defB + bajaDefB;
 
-      // 2. Ritmo del partido (Se reduce si alguno viene en Back-to-Back)
-      let ritmoPartido = (paceA + paceB) / 2.0;
-      if (b2bA) ritmoPartido -= 0.6;
-      if (b2bB) ritmoPartido -= 0.6;
+      // 2. Ritmo del partido (baja si alguno viene en B2B)
+      let ritmo = (paceA + paceB) / 2;
+      if (descA === 0) ritmo -= RITMO_B2B;
+      if (descB === 0) ritmo -= RITMO_B2B;
 
-      // 3. FÓRMULA AJUSTADA A LA MEDIA DE LA LIGA: (OFF_A + DEF_B - Media_Liga)
-      const ptsA_por100 = offRealA + defB - mediaLiga;
-      const ptsB_por100 = offRealB + defA - mediaLiga;
+      // 3. Puntos por 100 posesiones ajustados a la media de la liga
+      const ptsA100 = offRealA + defRealB - mediaLiga;
+      const ptsB100 = offRealB + defRealA - mediaLiga;
 
-      // 4. Proyección de puntos (+2.0 de Localía y -1.5 si jugó ayer B2B)
-      const proyeccionA = ((ptsA_por100 / 100.0) * ritmoPartido) + 2.0 - (b2bA ? 1.5 : 0);
-      const proyeccionB = ((ptsB_por100 / 100.0) * ritmoPartido) - (b2bB ? 1.5 : 0);
+      // 4. Localía repartida (no infla el total) + descanso, altura, giras
+      const altura = EQUIPOS_ALTURA.includes(eqA);
+      const proyA = (ptsA100 / 100) * ritmo + ajustes.localia / 2
+                    + PTS_DESCANSO[descA] - (tresA ? PTS_TRES_EN_CUATRO : 0);
+      const proyB = (ptsB100 / 100) * ritmo - ajustes.localia / 2
+                    + PTS_DESCANSO[descB] - (tresB ? PTS_TRES_EN_CUATRO : 0)
+                    - (giraB ? PTS_GIRA : 0) - (altura ? PTS_ALTURA : 0);
 
-      const proyeccionTotal = proyeccionA + proyeccionB;
-      const margenGanador = proyeccionA - proyeccionB;
+      const proyeccionTotal = proyA + proyB;
+      const margen = proyA - proyB;
+      const textoGanador = margen > 0
+        ? `${eqA} por ${margen.toFixed(1)} pts`
+        : `${eqB} por ${Math.abs(margen).toFixed(1)} pts`;
 
-      const difTotal = proyeccionTotal - linea;
-      const textoGanador = margenGanador > 0 
-        ? `${eqA} por ${margenGanador.toFixed(1)} pts` 
-        : `${eqB} por ${Math.abs(margenGanador).toFixed(1)} pts`;
+      // 5. Ventajas y probabilidades
+      const tot = evaluarMercado(proyeccionTotal - linea, momioTot, ajustes.sigmaTot, ajustes.topeTot);
+      const hc = evaluarMercado(margen + handicap, momioHc, ajustes.sigmaHc, ajustes.topeHc);
 
-      const handicapProyectado = proyeccionB - proyeccionA;
-      const difHandicap = handicap - handicapProyectado;
+      const notas = [];
+      const descTxt = d => (d === 0 ? 'B2B' : `${d === 3 ? '3+' : d}d descanso`);
+      if (descA !== 1) notas.push(`😴${eqA} ${descTxt(descA)}`);
+      if (descB !== 1) notas.push(`😴${eqB} ${descTxt(descB)}`);
+      if (bajaOffA || bajaDefA) notas.push(`🚑${eqA} −${bajaOffA}/+${bajaDefA}`);
+      if (bajaOffB || bajaDefB) notas.push(`🚑${eqB} −${bajaOffB}/+${bajaDefB}`);
+      if (tresA) notas.push(`🔁${eqA} 3en4`);
+      if (tresB) notas.push(`🔁${eqB} 3en4`);
+      if (giraB) notas.push(`✈️${eqB} gira`);
+      if (altura) notas.push(`🏔️ Altura`);
 
-      // Etiquetas informativas de ajustes aplicados
-      let notas = [];
-      if (b2bA) notas.push(`⚡${eqA} B2B`);
-      if (starA) notas.push(`🚑${eqA} Sin Estrella`);
-      if (b2bB) notas.push(`⚡${eqB} B2B`);
-      if (starB) notas.push(`🚑${eqB} Sin Estrella`);
-
-      partidosGuardados.push({
-        eqA, eqB, linea, handicap,
-        proyeccionTotal, difTotal,
-        textoGanador, difHandicap,
-        notasAjuste: notas.join(' | '),
-        resTotal: null,
-        resHc: null
+      partidos.push({
+        v: 2, id: String(Date.now()) + Math.random().toString(36).slice(2, 7),
+        fecha: new Date().toISOString(), archivado: false, unidades,
+        eqA, eqB, linea, handicap, proyeccionTotal, textoGanador,
+        notasAjuste: notas.join(' | '), tot, hc
       });
 
       guardarYRenderizar();
 
-      // Reiniciar campos de partido manteniendo la constante de la liga
+      // Reiniciar el formulario conservando la media de la liga
       const mediaActual = document.getElementById('mediaLiga').value;
       form.reset();
       document.getElementById('mediaLiga').value = mediaActual;
+      document.getElementById('fuenteA').textContent = '';
+      document.getElementById('fuenteB').textContent = '';
       selectEqA.value = '';
       selectEqB.value = '';
       actualizarOpciones();
       selectEqA.focus();
     });
 
+    // ================== INICIO ==================
+    mostrarAjustes();
     actualizarEstadoMemoria();
     guardarYRenderizar();
   </script>
