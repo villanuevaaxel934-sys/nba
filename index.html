@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modelo Pro NBA: Totales, Hándicap y Récord</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 1.5rem 1rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1350px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      text-align: center;
+      color: #38bdf8;
+    }
+
+    h2 {
+      font-size: 1.15rem;
+      color: #f8fafc;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+
+    /* Panel de Récord y Estadísticas */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .stat-box {
+      background-color: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.85rem 1rem;
+      text-align: center;
+    }
+
+    .stat-title {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #38bdf8;
+    }
+
+    /* Importador Rápido */
+    details {
+      background-color: #1e293b;
+      border: 1px solid #38bdf8;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+    }
+
+    summary {
+      font-weight: 700;
+      color: #38bdf8;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .importer-body {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    textarea {
+      width: 100%;
+      height: 110px;
+      background-color: #0f172a;
+      border: 1px solid #475569;
+      color: #e2e8f0;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      resize: vertical;
+    }
+
+    /* Formulario */
+    .team-section {
+      background-color: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .grid-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 1rem;
+    }
+
+    .modifiers-row {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 0.85rem;
+      padding-top: 0.75rem;
+      border-top: 1px dashed #334155;
+      flex-wrap: wrap;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-label input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .casino-group {
+      background-color: #334155;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    label {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    input[type="number"], select {
+      background-color: #1e293b;
+      border: 1px solid #475569;
+      color: #ffffff;
+      padding: 0.6rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #38bdf8;
+    }
+
+    .btn-add {
+      width: 100%;
+      padding: 0.8rem;
+      background-color: #0284c7;
+      color: #ffffff;
+      font-weight: 700;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-add:hover {
+      background-color: #0369a1;
+    }
+
+    .header-tabla {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .btn-clear {
+      padding: 0.5rem 0.9rem;
+      background-color: #dc2626;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.8rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-clear:hover {
+      background-color: #b91c1c;
+    }
+
+    .btn-delete-row {
+      background-color: transparent;
+      border: 1px solid #ef4444;
+      color: #ef4444;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+
+    .btn-delete-row:hover {
+      background-color: #ef4444;
+      color: #ffffff;
+    }
+
+    /* Botones de Acierto / Fallo */
+    .grade-group {
+      display: inline-flex;
+      gap: 0.25rem;
+      margin-left: 0.4rem;
+    }
+
+    .btn-grade {
+      background-color: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      padding: 0.2rem 0.4rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      opacity: 0.5;
+      transition: all 0.15s;
+    }
+
+    .btn-grade:hover {
+      opacity: 0.85;
+    }
+
+    .btn-grade.active-win {
+      opacity: 1;
+      background-color: #14532d;
+      border-color: #4ade80;
+    }
+
+    .btn-grade.active-loss {
+      opacity: 1;
+      background-color: #7f1d1d;
+      border-color: #f87171;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      padding: 0.7rem 0.75rem;
+      border-bottom: 1px solid #334155;
+      vertical-align: middle;
+    }
+
+    th {
+      background-color: #0f172a;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      display: inline-block;
+    }
+
+    .badge-pass {
+      background-color: #334155;
+      color: #94a3b8;
+      border: 1px solid #475569;
+    }
+
+    .divisor {
+      border-left: 2px solid #334155;
+    }
+
+    .tags-info {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 0.2rem;
+    }
+
+    /* Top 3 */
+    .top-picks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .pick-card {
+      background-color: #0f172a;
+      border: 1px solid #38bdf8;
+      border-radius: 8px;
+      padding: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .pick-rank {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #38bdf8;
+      text-transform: uppercase;
+    }
+
+    .pick-jugada {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #4ade80;
+    }
+
+    .pick-partido {
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+
+    .pick-detalle {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    .pick-ventaja {
+      margin-top: 0.3rem;
+      background-color: #1e293b;
+      border: 1px solid #475569;
+      padding: 0.3rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: #fbbf24;
+      font-weight: 700;
+      align-self: flex-start;
+    }
+
+    .empty-msg {
+      color: #64748b;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 1rem;
+    }
+    /* Ajustes para celular */
+    @media (max-width: 600px) {
+      body { padding: 1rem 0.5rem; }
+      .card { padding: 0.9rem; }
+      h1 { font-size: 1.25rem; }
+      input, select { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Modelo Predictivo NBA Pro (Eficiencia Ajustada + Pace)</h1>
+
+    <!-- PANEL DE RÉCORD DE ACIERTOS -->
+    <div class="card stats-bar">
+      <div class="stat-box">
+        <div class="stat-title">Récord Totales (O/U)</div>
+        <div class="stat-value" id="recTotalesTxt">0 - 0 (0%)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">Récord Hándicap</div>
+        <div class="stat-value" id="recHandicapTxt">0 - 0 (0%)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">Efectividad Global</div>
+        <div class="stat-value" id="recGlobalTxt" style="color: #4ade80;">0 - 0 (0%)</div>
+      </div>
+    </div>
+
+    <!-- IMPORTADOR RÁPIDO DESDE NBA.COM -->
+    <details>
+      <summary>
+        <span>⚡ Importador Rápido de Estadísticas (Copiar y Pegar de NBA.com)</span>
+        <span id="estadoMemoria" style="font-size: 0.8rem; color: #4ade80;">0 equipos en memoria</span>
+      </summary>
+      <div class="importer-body">
+        <p style="font-size: 0.8rem; color: #94a3b8;">
+          En la tabla de <strong>Advanced Stats</strong> de NBA.com (filtrada por últimos 10 partidos), selecciona desde el primer hasta el último equipo, cópialo (<code>Ctrl + C</code>) y pégalo aquí abajo. Al elegir un equipo en el formulario, sus datos se llenarán solos.
+        </p>
+        <textarea id="textoImportar" placeholder="Pega aquí las filas copiadas de la tabla avanzada de NBA.com..."></textarea>
+        <button type="button" id="btnImportar" class="btn-add" style="background-color: #10b981;">Procesar y Guardar Estadísticas de Equipos</button>
+      </div>
+    </details>
+
+    <!-- FORMULARIO DE CAPTURA -->
+    <div class="card">
+      <form id="partidoForm">
+        <!-- EQUIPO LOCAL -->
+        <div class="team-section">
+          <div class="grid-form">
+            <div class="form-group">
+              <label>Equipo Local</label>
+              <select id="eqA" required>
+                <option value="" disabled selected>Seleccione Local...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>PACE (Local)</label>
+              <input type="number" step="0.01" id="paceA" required>
+            </div>
+            <div class="form-group">
+              <label>OFFRTG (Local)</label>
+              <input type="number" step="0.1" id="offA" required>
+            </div>
+            <div class="form-group">
+              <label>DEFRTG (Local)</label>
+              <input type="number" step="0.1" id="defA" required>
+            </div>
+          </div>
+          <div class="modifiers-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="b2bA"> ⚡ Jugó ayer (Back-to-Back: -1.5 pts y menor ritmo)
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="starA"> 🚑 Baja de Estrella Titular (-3.5 OFFRTG)
+            </label>
+          </div>
+        </div>
+
+        <!-- EQUIPO VISITANTE -->
+        <div class="team-section">
+          <div class="grid-form">
+            <div class="form-group">
+              <label>Equipo Visitante</label>
+              <select id="eqB" required>
+                <option value="" disabled selected>Seleccione Visita...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>PACE (Visita)</label>
+              <input type="number" step="0.01" id="paceB" required>
+            </div>
+            <div class="form-group">
+              <label>OFFRTG (Visita)</label>
+              <input type="number" step="0.1" id="offB" required>
+            </div>
+            <div class="form-group">
+              <label>DEFRTG (Visita)</label>
+              <input type="number" step="0.1" id="defB" required>
+            </div>
+          </div>
+          <div class="modifiers-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="b2bB"> ⚡ Jugó ayer (Back-to-Back: -1.5 pts y menor ritmo)
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="starB"> 🚑 Baja de Estrella Titular (-3.5 OFFRTG)
+            </label>
+          </div>
+        </div>
+
+        <!-- LÍNEAS DEL CASINO Y MEDIA DE LIGA -->
+        <div class="casino-group">
+          <div class="form-group">
+            <label style="color: #cbd5e1; font-weight: bold;">Línea Total Casino (O/U)</label>
+            <input type="number" step="0.5" id="lineaCasino" placeholder="Ej. 229.5" required>
+          </div>
+          <div class="form-group">
+            <label style="color: #cbd5e1; font-weight: bold;">Hándicap Equipo Local</label>
+            <input type="number" step="0.5" id="handicapCasino" placeholder="Ej. -4.5 o +3.5" required>
+          </div>
+          <div class="form-group">
+            <label style="color: #94a3b8;">Rating Promedio NBA (Constante)</label>
+            <input type="number" step="0.1" id="mediaLiga" value="114.5" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-add">Guardar y Analizar Partido</button>
+      </form>
+    </div>
+
+    <!-- TABLA DE REGISTROS -->
+    <div class="card" style="overflow-x: auto;">
+      <div class="header-tabla">
+        <h2 style="margin-bottom: 0;">📊 Partidos de la Jornada</h2>
+        <button type="button" id="btnLimpiarTodo" class="btn-clear">🗑️ Borrar Toda la Lista</button>
+      </div>
+      <table id="tablaResumen">
+        <thead>
+          <tr>
+            <th>Partido y Ajustes</th>
+            <th class="divisor" colspan="4" style="text-align: center; color: #fbbf24;">MERCADO DE TOTALES (O/U)</th>
+            <th class="divisor" colspan="4" style="text-align: center; color: #a78bfa;">MERCADO DE HÁNDICAP</th>
+            <th class="divisor" style="text-align: center;">Acción</th>
+          </tr>
+          <tr>
+            <th></th>
+            <th class="divisor">Línea</th>
+            <th>Proy.</th>
+            <th>Pick Totales</th>
+            <th>Resultado</th>
+            <th class="divisor">Hándicap</th>
+            <th>Proy. Ganador</th>
+            <th>Pick Hándicap</th>
+            <th>Resultado</th>
+            <th class="divisor"></th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTabla">
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECCIÓN TOP 3 MEJORES JUGADAS -->
+    <div class="card">
+      <h2>🏆 Top 3 Mejores Jugadas a Tomar (Excluye Zona de No Apuesta)</h2>
+      <div id="contenedorTopPicks" class="top-picks-grid">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Diccionario de los 30 equipos para el Importador Rápido y Selectores
+    const mapaEquiposNBA = {
+      "Atlanta Hawks": "ATL", "Boston Celtics": "BOS", "Brooklyn Nets": "BKN", "Charlotte Hornets": "CHA",
+      "Chicago Bulls": "CHI", "Cleveland Cavaliers": "CLE", "Dallas Mavericks": "DAL", "Denver Nuggets": "DEN",
+      "Detroit Pistons": "DET", "Golden State Warriors": "GSW", "Houston Rockets": "HOU", "Indiana Pacers": "IND",
+      "LA Clippers": "LAC", "Los Angeles Clippers": "LAC", "Los Angeles Lakers": "LAL", "Memphis Grizzlies": "MEM",
+      "Miami Heat": "MIA", "Milwaukee Bucks": "MIL", "Minnesota Timberwolves": "MIN", "New Orleans Pelicans": "NOP",
+      "New York Knicks": "NYK", "Oklahoma City Thunder": "OKC", "Orlando Magic": "ORL", "Philadelphia 76ers": "PHI",
+      "Phoenix Suns": "PHX", "Portland Trail Blazers": "POR", "Sacramento Kings": "SAC", "San Antonio Spurs": "SAS",
+      "Toronto Raptors": "TOR", "Utah Jazz": "UTA", "Washington Wizards": "WAS"
+    };
+
+    const equiposNBA = [
+      "ATL", "BOS", "BKN", "CHA", "CHI", "CLE", "DAL", "DEN", "DET", "GSW",
+      "HOU", "IND", "LAC", "LAL", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK",
+      "OKC", "ORL", "PHI", "PHX", "POR", "SAC", "SAS", "TOR", "UTA", "WAS"
+    ];
+
+    const selectEqA = document.getElementById('eqA');
+    const selectEqB = document.getElementById('eqB');
+    const form = document.getElementById('partidoForm');
+    const cuerpoTabla = document.getElementById('cuerpoTabla');
+    const contenedorTopPicks = document.getElementById('contenedorTopPicks');
+
+    let partidosGuardados = JSON.parse(localStorage.getItem('nbaPartidosPro')) || [];
+    let baseDatosEquipos = JSON.parse(localStorage.getItem('nbaEquiposStatsDB')) || {};
+
+    // Poblar selects
+    equiposNBA.forEach(eq => {
+      selectEqA.add(new Option(eq, eq));
+      selectEqB.add(new Option(eq, eq));
+    });
+
+    // Actualizar contador de equipos importados
+    function actualizarEstadoMemoria() {
+      const cant = Object.keys(baseDatosEquipos).length;
+      document.getElementById('estadoMemoria').textContent = `${cant}/30 equipos guardados en memoria`;
+      if (cant > 0) {
+        let sumaOff = 0;
+        Object.values(baseDatosEquipos).forEach(d => sumaOff += d.off);
+        document.getElementById('mediaLiga').value = (sumaOff / cant).toFixed(1);
+      }
+    }
+
+    // Importador Rápido desde texto pegado de NBA.com
+    document.getElementById('btnImportar').addEventListener('click', function() {
+      const texto = document.getElementById('textoImportar').value;
+      if (!texto.trim()) return alert("Pega primero el texto de la tabla de NBA.com");
+
+      let importados = 0;
+      for (const [nombreCompleto, sigla] of Object.entries(mapaEquiposNBA)) {
+        const idx = texto.indexOf(nombreCompleto);
+        if (idx !== -1) {
+          const fragmento = texto.slice(idx + nombreCompleto.length, idx + nombreCompleto.length + 220);
+          const numeros = fragmento.match(/-?\d+(\.\d+)?/g);
+          // En NBA.com Advanced Stats: [4] = OFFRTG, [5] = DEFRTG, [16] = PACE
+          if (numeros && numeros.length >= 17) {
+            baseDatosEquipos[sigla] = {
+              off: parseFloat(numeros[4]),
+              def: parseFloat(numeros[5]),
+              pace: parseFloat(numeros[16])
+            };
+            importados++;
+          }
+        }
+      }
+
+      if (importados > 0) {
+        localStorage.setItem('nbaEquiposStatsDB', JSON.stringify(baseDatosEquipos));
+        actualizarEstadoMemoria();
+        document.getElementById('textoImportar').value = '';
+        alert(`✅ ¡Éxito! Se importaron automáticamente las estadísticas de ${importados} equipos.`);
+      } else {
+        alert("⚠️ No se detectaron equipos. Asegúrate de copiar las filas completas desde la tabla Advanced Stats de NBA.com.");
+      }
+    });
+
+    // Autocompletar al elegir equipo y bloquear duplicados
+    function actualizarOpciones() {
+      const usados = new Set();
+      partidosGuardados.forEach(p => { usados.add(p.eqA); usados.add(p.eqB); });
+
+      const valA = selectEqA.value;
+      const valB = selectEqB.value;
+
+      Array.from(selectEqA.options).forEach(opt => {
+        if (opt.value !== "") {
+          const bloq = usados.has(opt.value) || (opt.value === valB);
+          opt.disabled = bloq; opt.hidden = bloq;
+        }
+      });
+
+      Array.from(selectEqB.options).forEach(opt => {
+        if (opt.value !== "") {
+          const bloq = usados.has(opt.value) || (opt.value === valA);
+          opt.disabled = bloq; opt.hidden = bloq;
+        }
+      });
+    }
+
+    selectEqA.addEventListener('change', function() {
+      actualizarOpciones();
+      const d = baseDatosEquipos[this.value];
+      if (d) {
+        document.getElementById('paceA').value = d.pace;
+        document.getElementById('offA').value = d.off;
+        document.getElementById('defA').value = d.def;
+      }
+    });
+
+    selectEqB.addEventListener('change', function() {
+      actualizarOpciones();
+      const d = baseDatosEquipos[this.value];
+      if (d) {
+        document.getElementById('paceB').value = d.pace;
+        document.getElementById('offB').value = d.off;
+        document.getElementById('defB').value = d.def;
+      }
+    });
+
+    // Calcular y actualizar el panel de Récord
+    function actualizarRecord() {
+      let wTot = 0, lTot = 0, wHc = 0, lHc = 0;
+
+      partidosGuardados.forEach(p => {
+        if (p.resTotal === 'W') wTot++;
+        if (p.resTotal === 'L') lTot++;
+        if (p.resHc === 'W') wHc++;
+        if (p.resHc === 'L') lHc++;
+      });
+
+      const pctTot = (wTot + lTot) > 0 ? ((wTot / (wTot + lTot)) * 100).toFixed(1) : 0;
+      const pctHc = (wHc + lHc) > 0 ? ((wHc / (wHc + lHc)) * 100).toFixed(1) : 0;
+      const wGlob = wTot + wHc;
+      const lGlob = lTot + lHc;
+      const pctGlob = (wGlob + lGlob) > 0 ? ((wGlob / (wGlob + lGlob)) * 100).toFixed(1) : 0;
+
+      document.getElementById('recTotalesTxt').textContent = `${wTot} - ${lTot} (${pctTot}%)`;
+      document.getElementById('recHandicapTxt').textContent = `${wHc} - ${lHc} (${pctHc}%)`;
+      document.getElementById('recGlobalTxt').textContent = `${wGlob} - ${lGlob} (${pctGlob}%)`;
+    }
+
+    function guardarYRenderizar() {
+      localStorage.setItem('nbaPartidosPro', JSON.stringify(partidosGuardados));
+      renderizarTabla();
+      renderizarTopPicks();
+      actualizarOpciones();
+      actualizarRecord();
+    }
+
+    // Marcar Acierto (W) o Fallo (L)
+    window.calificarPick = function(index, mercado, resultado) {
+      if (mercado === 'total') {
+        partidosGuardados[index].resTotal = (partidosGuardados[index].resTotal === resultado) ? null : resultado;
+      } else {
+        partidosGuardados[index].resHc = (partidosGuardados[index].resHc === resultado) ? null : resultado;
+      }
+      guardarYRenderizar();
+    };
+
+    function renderizarTabla() {
+      cuerpoTabla.innerHTML = '';
+
+      if (partidosGuardados.length === 0) {
+        cuerpoTabla.innerHTML = `<tr><td colspan="10" class="empty-msg">No hay partidos registrados en la lista.</td></tr>`;
+        return;
+      }
+
+      partidosGuardados.forEach((p, index) => {
+        // Evaluación de Totales con Filtro de Zona de No Apuesta (< 1.5 pts)
+        let recTotal = "";
+        if (Math.abs(p.difTotal) < 1.5) {
+          recTotal = `<span class="badge badge-pass">⚠️ PASAR (Sin Valor)</span>`;
+        } else if (p.difTotal <= -4.0) {
+          recTotal = `<span class="badge" style="background: #7f1d1d; color: #fca5a5;">🔥 FUERTE BAJAS</span>`;
+        } else if (p.difTotal >= 4.0) {
+          recTotal = `<span class="badge" style="background: #14532d; color: #86efac;">🔥 FUERTE ALTAS</span>`;
+        } else if (p.difTotal > 0) {
+          recTotal = `<span class="badge" style="color: #4ade80;">Altas</span>`;
+        } else {
+          recTotal = `<span class="badge" style="color: #f87171;">Bajas</span>`;
+        }
+
+        // Evaluación de Hándicap con Filtro de Zona de No Apuesta (< 1.5 pts)
+        let recHandicap = "";
+        if (Math.abs(p.difHandicap) < 1.5) {
+          recHandicap = `<span class="badge badge-pass">⚠️ PASAR (Sin Valor)</span>`;
+        } else if (p.difHandicap > 3.5) {
+          recHandicap = `<span class="badge" style="background: #4c1d95; color: #c4b5fd;">🔥 FUERTE ${p.eqA}</span>`;
+        } else if (p.difHandicap < -3.5) {
+          recHandicap = `<span class="badge" style="background: #4c1d95; color: #c4b5fd;">🔥 FUERTE ${p.eqB}</span>`;
+        } else if (p.difHandicap > 0) {
+          recHandicap = `<span class="badge" style="color: #a855f7;">Jugar a ${p.eqA}</span>`;
+        } else {
+          recHandicap = `<span class="badge" style="color: #a855f7;">Jugar a ${p.eqB}</span>`;
+        }
+
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+          <td>
+            <strong>${p.eqA}</strong> vs <strong>${p.eqB}</strong>
+            <div class="tags-info">${p.notasAjuste || 'Sin penalizaciones'}</div>
+          </td>
+          <td class="divisor"><strong>${p.linea}</strong></td>
+          <td style="color:#fcd34d; font-weight:600;">${p.proyeccionTotal.toFixed(1)}</td>
+          <td>${recTotal}</td>
+          <td>
+            <div class="grade-group">
+              <button class="btn-grade ${p.resTotal === 'W' ? 'active-win' : ''}" onclick="calificarPick(${index}, 'total', 'W')">✅</button>
+              <button class="btn-grade ${p.resTotal === 'L' ? 'active-loss' : ''}" onclick="calificarPick(${index}, 'total', 'L')">❌</button>
+            </div>
+          </td>
+          <td class="divisor"><strong>${p.handicap > 0 ? '+' + p.handicap : p.handicap}</strong></td>
+          <td style="color:#d8b4fe;">${p.textoGanador}</td>
+          <td>${recHandicap}</td>
+          <td>
+            <div class="grade-group">
+              <button class="btn-grade ${p.resHc === 'W' ? 'active-win' : ''}" onclick="calificarPick(${index}, 'hc', 'W')">✅</button>
+              <button class="btn-grade ${p.resHc === 'L' ? 'active-loss' : ''}" onclick="calificarPick(${index}, 'hc', 'L')">❌</button>
+            </div>
+          </td>
+          <td class="divisor" style="text-align: center;">
+            <button class="btn-delete-row" onclick="eliminarPartido(${index})">Eliminar</button>
+          </td>
+        `;
+        cuerpoTabla.appendChild(fila);
+      });
+    }
+
+    function renderizarTopPicks() {
+      contenedorTopPicks.innerHTML = '';
+
+      let candidatas = [];
+
+      partidosGuardados.forEach(p => {
+        // Solo agregar si supera el filtro de Zona de No Apuesta (>= 1.5 pts de ventaja)
+        if (Math.abs(p.difTotal) >= 1.5) {
+          candidatas.push({
+            partido: `${p.eqA} vs ${p.eqB}`,
+            mercado: 'Totales (O/U)',
+            jugada: p.difTotal > 0 ? `ALTAS de ${p.linea}` : `BAJAS de ${p.linea}`,
+            detalle: `Proyección: ${p.proyeccionTotal.toFixed(1)} pts | Línea: ${p.linea}`,
+            ventaja: Math.abs(p.difTotal)
+          });
+        }
+
+        if (Math.abs(p.difHandicap) >= 1.5) {
+          const hcVisita = -p.handicap;
+          const txtLocal = p.handicap > 0 ? `+${p.handicap}` : `${p.handicap}`;
+          const txtVisita = hcVisita > 0 ? `+${hcVisita}` : `${hcVisita}`;
+
+          candidatas.push({
+            partido: `${p.eqA} vs ${p.eqB}`,
+            mercado: 'Hándicap',
+            jugada: p.difHandicap > 0 ? `${p.eqA} (${txtLocal})` : `${p.eqB} (${txtVisita})`,
+            detalle: `Proyección: ${p.textoGanador}`,
+            ventaja: Math.abs(p.difHandicap)
+          });
+        }
+      });
+
+      if (candidatas.length === 0) {
+        contenedorTopPicks.innerHTML = `<div class="empty-msg" style="grid-column: 1 / -1;">No hay jugadas que superen el filtro de seguridad (+1.5 pts de ventaja).</div>`;
+        return;
+      }
+
+      candidatas.sort((a, b) => b.ventaja - a.ventaja);
+      const top3 = candidatas.slice(0, 3);
+      const titulos = ['🥇 #1 MEJOR JUGADA DEL DÍA', '🥈 #2 SEGUNDA MEJOR OPCIÓN', '🥉 #3 TERCERA OPCIÓN'];
+
+      top3.forEach((pick, i) => {
+        const card = document.createElement('div');
+        card.className = 'pick-card';
+        card.innerHTML = `
+          <span class="pick-rank">${titulos[i]} • ${pick.mercado}</span>
+          <span class="pick-jugada">${pick.jugada}</span>
+          <span class="pick-partido">🏀 ${pick.partido}</span>
+          <span class="pick-detalle">${pick.detalle}</span>
+          <span class="pick-ventaja">🔥 Ventaja Matemática: +${pick.ventaja.toFixed(2)} pts</span>
+        `;
+        contenedorTopPicks.appendChild(card);
+      });
+    }
+
+    window.eliminarPartido = function(index) {
+      partidosGuardados.splice(index, 1);
+      guardarYRenderizar();
+    };
+
+    document.getElementById('btnLimpiarTodo').addEventListener('click', function() {
+      if (partidosGuardados.length === 0) return;
+      if (confirm('¿Deseas borrar todos los partidos de la tabla?')) {
+        partidosGuardados = [];
+        guardarYRenderizar();
+      }
+    });
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const eqA = selectEqA.value;
+      const paceA = parseFloat(document.getElementById('paceA').value);
+      const offA = parseFloat(document.getElementById('offA').value);
+      const defA = parseFloat(document.getElementById('defA').value);
+      const b2bA = document.getElementById('b2bA').checked;
+      const starA = document.getElementById('starA').checked;
+
+      const eqB = selectEqB.value;
+      const paceB = parseFloat(document.getElementById('paceB').value);
+      const offB = parseFloat(document.getElementById('offB').value);
+      const defB = parseFloat(document.getElementById('defB').value);
+      const b2bB = document.getElementById('b2bB').checked;
+      const starB = document.getElementById('starB').checked;
+
+      const linea = parseFloat(document.getElementById('lineaCasino').value);
+      const handicap = parseFloat(document.getElementById('handicapCasino').value);
+      const mediaLiga = parseFloat(document.getElementById('mediaLiga').value) || 114.5;
+
+      // Guardar las estadísticas ingresadas en la memoria del equipo
+      baseDatosEquipos[eqA] = { pace: paceA, off: offA, def: defA };
+      baseDatosEquipos[eqB] = { pace: paceB, off: offB, def: defB };
+      localStorage.setItem('nbaEquiposStatsDB', JSON.stringify(baseDatosEquipos));
+      actualizarEstadoMemoria();
+
+      // 1. Penalización por Baja de Estrella (-3.5 puntos en Rating Ofensivo)
+      const offRealA = starA ? (offA - 3.5) : offA;
+      const offRealB = starB ? (offB - 3.5) : offB;
+
+      // 2. Ritmo del partido (Se reduce si alguno viene en Back-to-Back)
+      let ritmoPartido = (paceA + paceB) / 2.0;
+      if (b2bA) ritmoPartido -= 0.6;
+      if (b2bB) ritmoPartido -= 0.6;
+
+      // 3. FÓRMULA AJUSTADA A LA MEDIA DE LA LIGA: (OFF_A + DEF_B - Media_Liga)
+      const ptsA_por100 = offRealA + defB - mediaLiga;
+      const ptsB_por100 = offRealB + defA - mediaLiga;
+
+      // 4. Proyección de puntos (+2.0 de Localía y -1.5 si jugó ayer B2B)
+      const proyeccionA = ((ptsA_por100 / 100.0) * ritmoPartido) + 2.0 - (b2bA ? 1.5 : 0);
+      const proyeccionB = ((ptsB_por100 / 100.0) * ritmoPartido) - (b2bB ? 1.5 : 0);
+
+      const proyeccionTotal = proyeccionA + proyeccionB;
+      const margenGanador = proyeccionA - proyeccionB;
+
+      const difTotal = proyeccionTotal - linea;
+      const textoGanador = margenGanador > 0 
+        ? `${eqA} por ${margenGanador.toFixed(1)} pts` 
+        : `${eqB} por ${Math.abs(margenGanador).toFixed(1)} pts`;
+
+      const handicapProyectado = proyeccionB - proyeccionA;
+      const difHandicap = handicap - handicapProyectado;
+
+      // Etiquetas informativas de ajustes aplicados
+      let notas = [];
+      if (b2bA) notas.push(`⚡${eqA} B2B`);
+      if (starA) notas.push(`🚑${eqA} Sin Estrella`);
+      if (b2bB) notas.push(`⚡${eqB} B2B`);
+      if (starB) notas.push(`🚑${eqB} Sin Estrella`);
+
+      partidosGuardados.push({
+        eqA, eqB, linea, handicap,
+        proyeccionTotal, difTotal,
+        textoGanador, difHandicap,
+        notasAjuste: notas.join(' | '),
+        resTotal: null,
+        resHc: null
+      });
+
+      guardarYRenderizar();
+
+      // Reiniciar campos de partido manteniendo la constante de la liga
+      const mediaActual = document.getElementById('mediaLiga').value;
+      form.reset();
+      document.getElementById('mediaLiga').value = mediaActual;
+      selectEqA.value = '';
+      selectEqB.value = '';
+      actualizarOpciones();
+      selectEqA.focus();
+    });
+
+    actualizarEstadoMemoria();
+    guardarYRenderizar();
+  </script>
+
+</body>
+</html>
