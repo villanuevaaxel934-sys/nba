@@ -844,17 +844,48 @@
       return null;
     }
 
+    let fechaAutoDB = localStorage.getItem('nbaFechaAutoDB') || '';
+
     function actualizarEstadoMemoria() {
       const siglas = Object.keys(baseDatosEquipos);
       const nSeason = siglas.filter(s => baseDatosEquipos[s].season).length;
       const nL10 = siglas.filter(s => baseDatosEquipos[s].l10).length;
-      document.getElementById('estadoMemoria').textContent =
-        `Temporada: ${nSeason}/30 · Últimos 10: ${nL10}/30`;
+      let texto = `Temporada: ${nSeason}/30 · Últimos 10: ${nL10}/30`;
+      if (fechaAutoDB) {
+        const f = new Date(fechaAutoDB);
+        if (!isNaN(f)) {
+          const fTxt = f.toLocaleString('es-MX', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+          texto += ` · Auto: ${fTxt}`;
+        }
+      }
+      document.getElementById('estadoMemoria').textContent = texto;
 
       const stats = siglas.map(statsEquipo).filter(Boolean);
       if (stats.length > 0) {
         const suma = stats.reduce((acc, s) => acc + s.off, 0);
         document.getElementById('mediaLiga').value = (suma / stats.length).toFixed(1);
+      }
+    }
+
+    async function cargarBaseDatosAutomatica() {
+      try {
+        const resp = await fetch('data/equipos.json?t=' + Date.now());
+        if (!resp.ok) return;
+        const datos = await resp.json();
+        if (!datos || !datos.equipos) return;
+        for (const [sigla, info] of Object.entries(datos.equipos)) {
+          baseDatosEquipos[sigla] = { season: info.season, l10: info.l10 };
+        }
+        localStorage.setItem('nbaEquiposStatsDB', JSON.stringify(baseDatosEquipos));
+        if (datos.actualizado) {
+          fechaAutoDB = datos.actualizado;
+          localStorage.setItem('nbaFechaAutoDB', fechaAutoDB);
+        }
+        actualizarEstadoMemoria();
+        if (selectEqA.value) rellenarEquipo(selectEqA.value, 'A');
+        if (selectEqB.value) rellenarEquipo(selectEqB.value, 'B');
+      } catch (e) {
+        // Si falla la red o se abre local sin servidor, usa lo guardado en localStorage
       }
     }
 
@@ -1296,6 +1327,7 @@
     // ================== INICIO ==================
     actualizarEstadoMemoria();
     guardarYRenderizar();
+    cargarBaseDatosAutomatica();
   </script>
 
 </body>
