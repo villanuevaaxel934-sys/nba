@@ -5,154 +5,284 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Modelo Pro NBA: Totales, Hándicap y Récord</title>
   <style>
+    :root {
+      --bg: #070b14;
+      --bg-grad: radial-gradient(circle at 15% 0%, rgba(56, 189, 248, 0.10), transparent 45%),
+                 radial-gradient(circle at 85% 10%, rgba(168, 85, 247, 0.08), transparent 40%);
+      --surface: #0f172a;
+      --surface-2: #162033;
+      --surface-3: #1e293b;
+      --border: rgba(148, 163, 184, 0.16);
+      --border-strong: rgba(148, 163, 184, 0.28);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --dim: #64748b;
+      --accent: #38bdf8;
+      --accent-2: #818cf8;
+      --green: #4ade80;
+      --amber: #fbbf24;
+      --red: #f87171;
+      --purple: #c4b5fd;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.65);
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
     }
 
     body {
-      background-color: #0f172a;
-      color: #f8fafc;
-      padding: 1.5rem 1rem;
+      background-color: var(--bg);
+      background-image: var(--bg-grad);
+      background-attachment: fixed;
+      color: var(--text);
+      padding: 1.75rem 1rem 3rem;
       display: flex;
       justify-content: center;
+      min-height: 100vh;
+      line-height: 1.45;
     }
 
     .container {
       width: 100%;
-      max-width: 1350px;
+      max-width: 1320px;
       display: flex;
       flex-direction: column;
       gap: 1.25rem;
     }
 
-    h1 {
-      font-size: 1.5rem;
-      text-align: center;
-      color: #38bdf8;
+    /* Header */
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding: 0.25rem 0.25rem 0.5rem;
+    }
+
+    .hero-title h1 {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #f8fafc 0%, #38bdf8 60%, #818cf8 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
     }
 
     h2 {
-      font-size: 1.15rem;
-      color: #f8fafc;
-      margin-bottom: 0.75rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.9rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
 
     .card {
-      background-color: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(22, 32, 51, 0.95), rgba(15, 23, 42, 0.95));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       padding: 1.25rem;
+      box-shadow: var(--shadow);
     }
 
-    /* Panel de Récord y Estadísticas */
+    /* Panel de Récord */
     .stats-bar {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
-      align-items: center;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.9rem;
+      padding: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
     }
 
     .stat-box {
-      background-color: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      padding: 0.85rem 1rem;
-      text-align: center;
+      background: linear-gradient(180deg, var(--surface-2), var(--surface));
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .stat-box:nth-child(2) { border-top-color: #a78bfa; }
+    .stat-box:nth-child(3) { border-top-color: var(--green); }
+    .stat-box:nth-child(4) { border-top-color: var(--amber); }
+
+    .stat-box:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-strong);
     }
 
     .stat-title {
-      font-size: 0.75rem;
-      color: #94a3b8;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.3rem;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.35rem;
     }
 
     .stat-value {
       font-size: 1.25rem;
       font-weight: 800;
-      color: #38bdf8;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
     }
 
-    /* Importador Rápido */
+    /* Acordeones */
     details {
-      background-color: #1e293b;
-      border: 1px solid #38bdf8;
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.95rem 1.2rem;
+      transition: border-color 0.2s ease;
+    }
+
+    details[open] {
+      border-color: rgba(56, 189, 248, 0.45);
     }
 
     summary {
       font-weight: 700;
-      color: #38bdf8;
+      font-size: 0.92rem;
+      color: var(--accent);
       cursor: pointer;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      list-style: none;
+      gap: 0.75rem;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    .db-pill {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--green);
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid rgba(74, 222, 128, 0.28);
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
     }
 
     .importer-body {
       margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.85rem;
     }
 
     textarea {
       width: 100%;
       height: 110px;
-      background-color: #0f172a;
-      border: 1px solid #475569;
-      color: #e2e8f0;
-      padding: 0.75rem;
-      border-radius: 6px;
+      background-color: var(--bg);
+      border: 1px solid var(--border-strong);
+      color: var(--text);
+      padding: 0.8rem;
+      border-radius: var(--radius-sm);
       font-size: 0.85rem;
       resize: vertical;
     }
 
     /* Formulario */
-    .team-section {
-      background-color: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      padding: 1rem;
+    .teams-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
       margin-bottom: 1rem;
+    }
+
+    .team-section {
+      background: rgba(7, 11, 20, 0.55);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .team-section.visita {
+      border-left-color: #a78bfa;
+    }
+
+    .team-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+    }
+
+    .team-section.visita .team-badge {
+      color: var(--purple);
     }
 
     .grid-form {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .grid-form .full-span {
+      grid-column: 1 / -1;
     }
 
     .modifiers-row {
       display: flex;
-      gap: 1.5rem;
-      margin-top: 0.85rem;
+      gap: 1rem;
       padding-top: 0.75rem;
-      border-top: 1px dashed #334155;
+      border-top: 1px dashed var(--border);
       flex-wrap: wrap;
+      align-items: flex-end;
     }
 
     .checkbox-label {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      font-size: 0.85rem;
+      gap: 0.5rem;
+      font-size: 0.84rem;
       color: #cbd5e1;
       cursor: pointer;
       user-select: none;
+      padding: 0.45rem 0.7rem;
+      background: rgba(30, 41, 59, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: border-color 0.15s;
+    }
+
+    .checkbox-label:hover {
+      border-color: var(--border-strong);
     }
 
     .checkbox-label input {
       width: 16px;
       height: 16px;
+      accent-color: var(--accent);
       cursor: pointer;
     }
 
@@ -163,48 +293,60 @@
     }
 
     .casino-group {
-      background-color: #334155;
+      background: rgba(30, 41, 59, 0.55);
+      border: 1px solid var(--border);
       padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.9rem;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+      gap: 0.85rem;
     }
 
     label {
-      font-size: 0.8rem;
-      color: #94a3b8;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--muted);
     }
 
     input[type="number"], select {
-      background-color: #1e293b;
-      border: 1px solid #475569;
+      background-color: var(--surface);
+      border: 1px solid var(--border-strong);
       color: #ffffff;
-      padding: 0.6rem;
-      border-radius: 4px;
+      padding: 0.62rem 0.72rem;
+      border-radius: 8px;
       font-size: 0.9rem;
+      width: 100%;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
     input:focus, select:focus, textarea:focus {
       outline: none;
-      border-color: #38bdf8;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
     }
 
     .btn-add {
       width: 100%;
-      padding: 0.8rem;
-      background-color: #0284c7;
+      padding: 0.9rem 1.2rem;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
       color: #ffffff;
+      font-size: 0.95rem;
       font-weight: 700;
       border: none;
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
-      transition: background 0.2s;
+      box-shadow: 0 8px 20px -8px rgba(37, 99, 235, 0.7);
+      transition: transform 0.12s ease, filter 0.15s ease;
     }
 
     .btn-add:hover {
-      background-color: #0369a1;
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .btn-add:active {
+      transform: translateY(0);
     }
 
     .header-tabla {
@@ -213,32 +355,52 @@
       align-items: center;
       margin-bottom: 1rem;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
 
     .btn-clear {
-      padding: 0.5rem 0.9rem;
-      background-color: #dc2626;
-      color: #ffffff;
+      padding: 0.55rem 0.95rem;
+      background-color: rgba(220, 38, 38, 0.16);
+      color: #fca5a5;
       font-weight: 600;
       font-size: 0.8rem;
-      border: none;
-      border-radius: 4px;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 8px;
       cursor: pointer;
+      transition: background 0.15s, color 0.15s;
     }
 
     .btn-clear:hover {
-      background-color: #b91c1c;
+      background-color: #dc2626;
+      color: #ffffff;
+    }
+
+    .btn-close-day {
+      padding: 0.55rem 1rem;
+      background: rgba(56, 189, 248, 0.14);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .btn-close-day:hover {
+      background: #0284c7;
+      color: #ffffff;
     }
 
     .btn-delete-row {
       background-color: transparent;
-      border: 1px solid #ef4444;
-      color: #ef4444;
-      padding: 0.3rem 0.6rem;
-      border-radius: 4px;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      color: #fca5a5;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
       cursor: pointer;
       font-size: 0.75rem;
+      transition: all 0.15s;
     }
 
     .btn-delete-row:hover {
@@ -246,38 +408,58 @@
       color: #ffffff;
     }
 
-    /* Botones de Acierto / Fallo */
+    /* Botones de Acierto / Fallo / Empate */
     .grade-group {
       display: inline-flex;
-      gap: 0.25rem;
-      margin-left: 0.4rem;
+      gap: 0.3rem;
     }
 
     .btn-grade {
-      background-color: #0f172a;
-      border: 1px solid #475569;
-      border-radius: 4px;
-      padding: 0.2rem 0.4rem;
+      background-color: var(--bg);
+      border: 1px solid var(--border-strong);
+      border-radius: 7px;
+      min-width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      font-size: 0.75rem;
-      opacity: 0.5;
-      transition: all 0.15s;
+      font-size: 0.82rem;
+      opacity: 0.55;
+      transition: all 0.15s ease;
     }
 
     .btn-grade:hover {
-      opacity: 0.85;
+      opacity: 0.95;
+      transform: scale(1.06);
     }
 
     .btn-grade.active-win {
       opacity: 1;
-      background-color: #14532d;
-      border-color: #4ade80;
+      background-color: rgba(20, 83, 45, 0.9);
+      border-color: var(--green);
+      box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.2);
     }
 
     .btn-grade.active-loss {
       opacity: 1;
-      background-color: #7f1d1d;
-      border-color: #f87171;
+      background-color: rgba(127, 29, 29, 0.9);
+      border-color: var(--red);
+      box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
+    }
+
+    .btn-grade.active-push {
+      opacity: 1;
+      background-color: rgba(30, 58, 138, 0.9);
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+    }
+
+    /* Tablas */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
     }
 
     table {
@@ -285,42 +467,68 @@
       border-collapse: collapse;
       text-align: left;
       font-size: 0.85rem;
+      font-variant-numeric: tabular-nums;
     }
 
     th, td {
-      padding: 0.7rem 0.75rem;
-      border-bottom: 1px solid #334155;
+      padding: 0.78rem 0.8rem;
+      border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
 
     th {
-      background-color: #0f172a;
-      color: #94a3b8;
-      font-weight: 600;
+      background-color: rgba(7, 11, 20, 0.85);
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tbody tr:hover {
+      background-color: rgba(56, 189, 248, 0.04);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
     }
 
     .badge {
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-weight: bold;
-      font-size: 0.8rem;
+      padding: 0.26rem 0.6rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.76rem;
       display: inline-block;
+      white-space: nowrap;
     }
 
     .badge-pass {
-      background-color: #334155;
-      color: #94a3b8;
-      border: 1px solid #475569;
+      background-color: rgba(51, 65, 85, 0.55);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .badge-review {
+      background-color: rgba(120, 53, 15, 0.75);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.6);
     }
 
     .divisor {
-      border-left: 2px solid #334155;
+      border-left: 1px solid var(--border-strong);
     }
 
     .tags-info {
-      font-size: 0.75rem;
-      color: #94a3b8;
-      margin-top: 0.2rem;
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .pick-meta {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.28rem;
     }
 
     /* Top 3 */
@@ -331,153 +539,157 @@
     }
 
     .pick-card {
-      background-color: #0f172a;
-      border: 1px solid #38bdf8;
-      border-radius: 8px;
-      padding: 1.1rem;
+      background: linear-gradient(160deg, rgba(22, 32, 51, 0.95), rgba(7, 11, 20, 0.95));
+      border: 1px solid rgba(56, 189, 248, 0.38);
+      border-radius: var(--radius);
+      padding: 1.15rem;
       display: flex;
       flex-direction: column;
       gap: 0.45rem;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .pick-card:first-child {
+      border-color: rgba(251, 191, 36, 0.6);
+      box-shadow: 0 10px 28px -14px rgba(251, 191, 36, 0.35);
+    }
+
+    .pick-card:hover {
+      transform: translateY(-2px);
     }
 
     .pick-rank {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #38bdf8;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--accent);
       text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .pick-card:first-child .pick-rank {
+      color: var(--amber);
     }
 
     .pick-jugada {
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       font-weight: 800;
-      color: #4ade80;
+      color: var(--green);
     }
 
     .pick-partido {
-      font-size: 0.9rem;
-      color: #e2e8f0;
-      font-weight: 600;
+      font-size: 0.92rem;
+      color: var(--text);
+      font-weight: 700;
     }
 
     .pick-detalle {
       font-size: 0.8rem;
-      color: #94a3b8;
+      color: var(--muted);
     }
 
     .pick-ventaja {
-      margin-top: 0.3rem;
-      background-color: #1e293b;
-      border: 1px solid #475569;
-      padding: 0.3rem 0.55rem;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      color: #fbbf24;
+      margin-top: 0.35rem;
+      background-color: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--border-strong);
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      color: var(--amber);
       font-weight: 700;
       align-self: flex-start;
     }
 
     .empty-msg {
-      color: #64748b;
+      color: var(--dim);
       font-size: 0.9rem;
       text-align: center;
-      padding: 1rem;
-    }
-
-    /* Nuevos estilos: empates, revisar, ajustes, historial */
-    .btn-grade.active-push {
-      opacity: 1;
-      background-color: #1e3a8a;
-      border-color: #60a5fa;
-    }
-
-    .badge-review {
-      background-color: #78350f;
-      color: #fcd34d;
-      border: 1px solid #f59e0b;
-    }
-
-    .pick-meta {
-      display: block;
-      font-size: 0.72rem;
-      color: #94a3b8;
-      margin-top: 0.25rem;
+      padding: 1.5rem 1rem;
     }
 
     .hint {
-      font-size: 0.72rem;
-      color: #64748b;
+      font-size: 0.74rem;
+      color: var(--dim);
     }
 
     .fuente {
-      font-size: 0.7rem;
-      color: #4ade80;
+      font-size: 0.72rem;
+      color: var(--green);
+      font-weight: 600;
     }
 
     .btn-secondary {
       padding: 0.5rem 0.9rem;
-      background-color: #334155;
-      color: #ffffff;
+      background-color: var(--surface-3);
+      color: var(--text);
       font-weight: 600;
       font-size: 0.8rem;
-      border: 1px solid #475569;
-      border-radius: 4px;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
       cursor: pointer;
+      transition: background 0.15s;
     }
 
     .btn-secondary:hover {
-      background-color: #475569;
+      background-color: #334155;
     }
 
     .toolbar {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.55rem;
       flex-wrap: wrap;
     }
 
-    details.secundario {
-      border-color: #475569;
-    }
-
     details.secundario summary {
-      color: #cbd5e1;
+      color: #e2e8f0;
     }
 
-    .modifiers-row .form-group {
-      min-width: 150px;
+    .unidades-pos { color: var(--green); }
+    .unidades-neg { color: var(--red); }
+
+    /* Responsivo */
+    @media (max-width: 900px) {
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .teams-grid { grid-template-columns: 1fr; }
     }
 
-    .unidades-pos { color: #4ade80; }
-    .unidades-neg { color: #f87171; }
-
-    /* Ajustes para celular */
     @media (max-width: 600px) {
-      body { padding: 1rem 0.5rem; }
-      .card { padding: 0.9rem; }
-      h1 { font-size: 1.25rem; }
-      input, select { font-size: 16px; }
-      summary { flex-wrap: wrap; gap: 0.4rem; }
-      .modifiers-row { gap: 0.9rem; }
+      body { padding: 1rem 0.6rem 2.5rem; }
+      .card { padding: 0.95rem; }
+      .hero-title h1 { font-size: 1.28rem; }
+      .stats-bar { gap: 0.65rem; }
+      .stat-box { padding: 0.8rem 0.85rem; }
+      .stat-value { font-size: 1.05rem; }
+      input[type="number"], select { font-size: 16px; }
+      summary { flex-wrap: wrap; }
+      .btn-grade { min-width: 36px; height: 36px; }
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>Modelo Predictivo NBA Pro (Eficiencia Ajustada + Pace)</h1>
+    <!-- ENCABEZADO -->
+    <header class="hero">
+      <div class="hero-title">
+        <h1>🏀 Modelo Predictivo NBA Pro</h1>
+        <p class="hero-sub">Eficiencia ajustada, ritmo, probabilidad y valor esperado</p>
+      </div>
+      <span id="estadoMemoria" class="db-pill">Cargando equipos...</span>
+    </header>
 
-    <!-- PANEL DE RÉCORD (incluye historial) -->
-    <div class="card stats-bar">
+    <!-- PANEL DE RÉCORD -->
+    <div class="stats-bar">
       <div class="stat-box">
-        <div class="stat-title">Récord Totales (G-P-E)</div>
+        <div class="stat-title">Totales (G-P-E)</div>
         <div class="stat-value" id="recTotalesTxt">0-0-0 (0%)</div>
       </div>
       <div class="stat-box">
-        <div class="stat-title">Récord Hándicap (G-P-E)</div>
+        <div class="stat-title">Hándicap (G-P-E)</div>
         <div class="stat-value" id="recHandicapTxt">0-0-0 (0%)</div>
       </div>
       <div class="stat-box">
         <div class="stat-title">Efectividad Global</div>
-        <div class="stat-value" id="recGlobalTxt" style="color: #4ade80;">0-0-0 (0%)</div>
+        <div class="stat-value" id="recGlobalTxt" style="color: var(--green);">0-0-0 (0%)</div>
       </div>
       <div class="stat-box">
         <div class="stat-title">Unidades (ROI)</div>
@@ -485,177 +697,159 @@
       </div>
     </div>
 
-    <!-- IMPORTADOR RÁPIDO DESDE NBA.COM -->
-    <details>
-      <summary>
-        <span>⚡ Importador Rápido de Estadísticas (Copiar y Pegar de NBA.com)</span>
-        <span id="estadoMemoria" style="font-size: 0.8rem; color: #4ade80;">0 equipos en memoria</span>
-      </summary>
-      <div class="importer-body">
-        <p style="font-size: 0.8rem; color: #94a3b8;">
-          En la tabla de <strong>Advanced Stats</strong> de NBA.com, selecciona desde el primer hasta el último equipo, cópialo (<code>Ctrl + C</code>) y pégalo aquí abajo.
-          Importa <strong>dos veces</strong>: una con el filtro de <strong>temporada completa</strong> y otra con <strong>últimos 10 partidos</strong>. El modelo mezcla ambas (por defecto 70% temporada / 30% últimos 10).
-        </p>
-        <div class="form-group" style="max-width: 320px;">
-          <label>¿Qué datos estás pegando?</label>
-          <select id="tipoImportar">
-            <option value="season">Temporada completa</option>
-            <option value="l10">Últimos 10 partidos</option>
-          </select>
-        </div>
-        <textarea id="textoImportar" placeholder="Pega aquí las filas copiadas de la tabla avanzada de NBA.com..."></textarea>
-        <button type="button" id="btnImportar" class="btn-add" style="background-color: #10b981;">Procesar y Guardar Estadísticas de Equipos</button>
-      </div>
-    </details>
+    <!-- TOP 3 MEJORES JUGADAS -->
+    <div class="card">
+      <h2>🏆 Top 3 Mejores Jugadas del Día</h2>
+      <div id="contenedorTopPicks" class="top-picks-grid"></div>
+    </div>
 
     <!-- FORMULARIO DE CAPTURA -->
     <div class="card">
+      <h2>➕ Analizar Nuevo Partido</h2>
       <form id="partidoForm">
-        <!-- EQUIPO LOCAL -->
-        <div class="team-section">
-          <div class="grid-form">
-            <div class="form-group">
-              <label>Equipo Local <span class="fuente" id="fuenteA"></span></label>
-              <select id="eqA" required>
-                <option value="" disabled selected>Seleccione Local...</option>
-              </select>
+        <div class="teams-grid">
+          <!-- EQUIPO LOCAL -->
+          <div class="team-section">
+            <span class="team-badge">🏠 Equipo Local <span class="fuente" id="fuenteA"></span></span>
+            <div class="grid-form">
+              <div class="form-group full-span">
+                <label>Equipo</label>
+                <select id="eqA" required>
+                  <option value="" disabled selected>Seleccione Local...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>PACE</label>
+                <input type="number" step="any" id="paceA" required>
+              </div>
+              <div class="form-group">
+                <label>OFFRTG</label>
+                <input type="number" step="any" id="offA" required>
+              </div>
+              <div class="form-group">
+                <label>DEFRTG</label>
+                <input type="number" step="any" id="defA" required>
+              </div>
             </div>
-            <div class="form-group">
-              <label>PACE (Local)</label>
-              <input type="number" step="any" id="paceA" required>
-            </div>
-            <div class="form-group">
-              <label>OFFRTG (Local)</label>
-              <input type="number" step="any" id="offA" required>
-            </div>
-            <div class="form-group">
-              <label>DEFRTG (Local)</label>
-              <input type="number" step="any" id="defA" required>
+            <div class="modifiers-row">
+              <div class="form-group" style="flex: 1; min-width: 160px;">
+                <label>😴 Días de descanso</label>
+                <select id="descA">
+                  <option value="0">0 (jugó ayer, B2B)</option>
+                  <option value="1" selected>1 día</option>
+                  <option value="2">2 días</option>
+                  <option value="3">3+ días</option>
+                </select>
+              </div>
             </div>
           </div>
-          <div class="modifiers-row">
-            <div class="form-group">
-              <label>😴 Días de descanso</label>
-              <select id="descA">
-                <option value="0">0 (jugó ayer, B2B)</option>
-                <option value="1" selected>1 día</option>
-                <option value="2">2 días</option>
-                <option value="3">3+ días</option>
-              </select>
+
+          <!-- EQUIPO VISITANTE -->
+          <div class="team-section visita">
+            <span class="team-badge">✈️ Equipo Visitante <span class="fuente" id="fuenteB"></span></span>
+            <div class="grid-form">
+              <div class="form-group full-span">
+                <label>Equipo</label>
+                <select id="eqB" required>
+                  <option value="" disabled selected>Seleccione Visita...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>PACE</label>
+                <input type="number" step="any" id="paceB" required>
+              </div>
+              <div class="form-group">
+                <label>OFFRTG</label>
+                <input type="number" step="any" id="offB" required>
+              </div>
+              <div class="form-group">
+                <label>DEFRTG</label>
+                <input type="number" step="any" id="defB" required>
+              </div>
+            </div>
+            <div class="modifiers-row">
+              <div class="form-group" style="flex: 1; min-width: 160px;">
+                <label>😴 Días de descanso</label>
+                <select id="descB">
+                  <option value="0">0 (jugó ayer, B2B)</option>
+                  <option value="1" selected>1 día</option>
+                  <option value="2">2 días</option>
+                  <option value="3">3+ días</option>
+                </select>
+              </div>
+              <label class="checkbox-label">
+                <input type="checkbox" id="giraB"> ✈️ Gira larga (4.º+ de visita)
+              </label>
             </div>
           </div>
         </div>
 
-        <!-- EQUIPO VISITANTE -->
-        <div class="team-section">
-          <div class="grid-form">
-            <div class="form-group">
-              <label>Equipo Visitante <span class="fuente" id="fuenteB"></span></label>
-              <select id="eqB" required>
-                <option value="" disabled selected>Seleccione Visita...</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>PACE (Visita)</label>
-              <input type="number" step="any" id="paceB" required>
-            </div>
-            <div class="form-group">
-              <label>OFFRTG (Visita)</label>
-              <input type="number" step="any" id="offB" required>
-            </div>
-            <div class="form-group">
-              <label>DEFRTG (Visita)</label>
-              <input type="number" step="any" id="defB" required>
-            </div>
-          </div>
-          <div class="modifiers-row">
-            <div class="form-group">
-              <label>😴 Días de descanso</label>
-              <select id="descB">
-                <option value="0">0 (jugó ayer, B2B)</option>
-                <option value="1" selected>1 día</option>
-                <option value="2">2 días</option>
-                <option value="3">3+ días</option>
-              </select>
-            </div>
-            <label class="checkbox-label">
-              <input type="checkbox" id="giraB"> ✈️ Gira larga (4.º+ juego seguido de visita)
-            </label>
-          </div>
-        </div>
-
-        <p class="hint" style="margin-bottom: 1rem;">
-          🏔️ La altura se aplica sola cuando el local es DEN o UTA.
-        </p>
-
-        <!-- LÍNEAS DEL CASINO Y MEDIA DE LIGA -->
+        <!-- LÍNEAS DEL CASINO -->
         <div class="casino-group">
           <div class="form-group">
-            <label style="color: #cbd5e1; font-weight: bold;">Línea Total Casino (O/U)</label>
+            <label style="color: #e2e8f0;">Línea Total (O/U)</label>
             <input type="number" step="0.5" id="lineaCasino" placeholder="Ej. 229.5" required>
           </div>
           <div class="form-group">
-            <label style="color: #cbd5e1; font-weight: bold;">Momio Totales</label>
+            <label style="color: #e2e8f0;">Momio Totales</label>
             <input type="number" step="1" id="momioTot" value="-110" required>
           </div>
           <div class="form-group">
-            <label style="color: #cbd5e1; font-weight: bold;">Hándicap Equipo Local</label>
+            <label style="color: #e2e8f0;">Hándicap Local</label>
             <input type="number" step="0.5" id="handicapCasino" placeholder="Ej. -4.5 o +3.5" required>
           </div>
           <div class="form-group">
-            <label style="color: #cbd5e1; font-weight: bold;">Momio Hándicap</label>
+            <label style="color: #e2e8f0;">Momio Hándicap</label>
             <input type="number" step="1" id="momioHc" value="-110" required>
           </div>
           <div class="form-group">
-            <label style="color: #cbd5e1; font-weight: bold;">Unidades por Apuesta</label>
+            <label style="color: #e2e8f0;">Unidades</label>
             <input type="number" step="any" min="0.1" id="unidades" value="1" required>
           </div>
           <div class="form-group">
-            <label style="color: #94a3b8;">Rating Promedio NBA (se calcula solo)</label>
+            <label>Media Liga (auto)</label>
             <input type="number" step="0.1" id="mediaLiga" value="114.5" required>
           </div>
         </div>
+
+        <p class="hint" style="margin-bottom: 0.9rem;">
+          🏔️ La altura se ajusta automáticamente cuando el local es DEN o UTA.
+        </p>
 
         <button type="submit" class="btn-add">Guardar y Analizar Partido</button>
       </form>
     </div>
 
     <!-- TABLA DE LA JORNADA -->
-    <div class="card" style="overflow-x: auto;">
+    <div class="card">
       <div class="header-tabla">
         <h2 style="margin-bottom: 0;">📊 Partidos de la Jornada</h2>
-        <button type="button" id="btnCerrarJornada" class="btn-clear" style="background-color: #0284c7;">📥 Cerrar Jornada (guardar en historial)</button>
+        <button type="button" id="btnCerrarJornada" class="btn-close-day">📥 Cerrar Jornada (guardar en historial)</button>
       </div>
-      <table id="tablaResumen">
-        <thead>
-          <tr>
-            <th>Partido y Ajustes</th>
-            <th class="divisor" colspan="4" style="text-align: center; color: #fbbf24;">MERCADO DE TOTALES (O/U)</th>
-            <th class="divisor" colspan="4" style="text-align: center; color: #a78bfa;">MERCADO DE HÁNDICAP</th>
-            <th class="divisor" style="text-align: center;">Acción</th>
-          </tr>
-          <tr>
-            <th></th>
-            <th class="divisor">Línea</th>
-            <th>Proy.</th>
-            <th>Pick Totales</th>
-            <th>Resultado</th>
-            <th class="divisor">Hándicap</th>
-            <th>Proy. Ganador</th>
-            <th>Pick Hándicap</th>
-            <th>Resultado</th>
-            <th class="divisor"></th>
-          </tr>
-        </thead>
-        <tbody id="cuerpoTabla">
-        </tbody>
-      </table>
-    </div>
-
-    <!-- SECCIÓN TOP 3 MEJORES JUGADAS -->
-    <div class="card">
-      <h2>🏆 Top 3 Mejores Jugadas (ordenadas por valor esperado)</h2>
-      <div id="contenedorTopPicks" class="top-picks-grid">
+      <div class="table-wrap">
+        <table id="tablaResumen">
+          <thead>
+            <tr>
+              <th>Partido y Ajustes</th>
+              <th class="divisor" colspan="4" style="text-align: center; color: var(--amber);">Mercado de Totales (O/U)</th>
+              <th class="divisor" colspan="4" style="text-align: center; color: var(--purple);">Mercado de Hándicap</th>
+              <th class="divisor" style="text-align: center;">Acción</th>
+            </tr>
+            <tr>
+              <th></th>
+              <th class="divisor">Línea</th>
+              <th>Proy.</th>
+              <th>Pick</th>
+              <th>Resultado</th>
+              <th class="divisor">Hándicap</th>
+              <th>Proy. Ganador</th>
+              <th>Pick</th>
+              <th>Resultado</th>
+              <th class="divisor"></th>
+            </tr>
+          </thead>
+          <tbody id="cuerpoTabla"></tbody>
+        </table>
       </div>
     </div>
 
@@ -672,8 +866,8 @@
           <button type="button" id="btnBorrarHistorial" class="btn-clear">🗑️ Borrar Historial</button>
           <input type="file" id="archivoRespaldo" accept=".json,application/json" style="display: none;">
         </div>
-        <p class="hint">Tus datos viven en este navegador. Descarga un respaldo de vez en cuando para no perderlos, o para pasarlos a otro dispositivo.</p>
-        <div style="overflow-x: auto;">
+        <p class="hint">Tus picks se guardan en este navegador. Descarga un respaldo de vez en cuando para no perderlos o pasarlos a otro dispositivo.</p>
+        <div class="table-wrap">
           <table>
             <thead>
               <tr>
@@ -692,7 +886,30 @@
         </div>
       </div>
     </details>
+
+    <!-- IMPORTADOR MANUAL (RESPALDO) -->
+    <details class="secundario">
+      <summary>
+        <span>⚡ Importador Manual desde NBA.com (respaldo)</span>
+        <span class="hint">Opcional: las stats ya se actualizan solas</span>
+      </summary>
+      <div class="importer-body">
+        <p class="hint" style="color: var(--muted);">
+          Si algún día quieres actualizar datos a mano desde <strong>Advanced Stats</strong> de NBA.com, elige si pegas temporada completa o últimos 10 y pega las filas abajo.
+        </p>
+        <div class="form-group" style="max-width: 300px;">
+          <label>¿Qué datos estás pegando?</label>
+          <select id="tipoImportar">
+            <option value="season">Temporada completa</option>
+            <option value="l10">Últimos 10 partidos</option>
+          </select>
+        </div>
+        <textarea id="textoImportar" placeholder="Pega aquí las filas copiadas de la tabla avanzada de NBA.com..."></textarea>
+        <button type="button" id="btnImportar" class="btn-add" style="background: linear-gradient(135deg, #059669, #10b981); box-shadow: none;">Procesar y Guardar Estadísticas</button>
+      </div>
+    </details>
   </div>
+
 
   <script>
     // ================== CONSTANTES ==================
