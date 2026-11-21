@@ -934,17 +934,32 @@
     const PTS_ALTURA = 1.0;         // castigo al visitante en altura
     const PTS_GIRA = 0.7;           // castigo por gira larga de visita
     const PTS_TRES_EN_CUATRO = 0.8; // castigo por 3er juego en 4 noches
-    const RITMO_B2B = 0.6;          // posesiones menos por cada equipo en B2B
-    const PTS_DESCANSO = { 0: -1.5, 1: 0, 2: 0.3, 3: 0.5 };
+    const RITMO_B2B = 0.5;          // posesiones menos por cada equipo en B2B
+    const B2B_OFF = -1.0;           // OFFRTG del equipo cansado
+    const B2B_DEF = +1.0;           // DEFRTG del equipo cansado (el rival le anota más)
+    const PTS_DESCANSO = { 0: 0, 1: 0, 2: 0.3, 3: 0.5 }; // el B2B ya va en los ratings
+    const KELLY_FRAC = 0.25;        // ¼ de Kelly para el tamaño sugerido
 
     // Rangos válidos para el importador
     const RANGO_RTG = [95, 135];
     const RANGO_PACE = [90, 115];
 
+    // pesoModelo: cuánto pesa el modelo frente a la línea del casino (0.35 = 35% modelo, 65% mercado).
+    // Como la ventaja se encoge al mezclar, los topes de "revisar" se aplican a la ventaja pura y son más altos.
     const AJUSTES_DEFAULT = {
+      version: 3, pesoModelo: 0.35,
       pesoL10: 30, localia: 2.4, sigmaTot: 18, sigmaHc: 12,
-      probMin: 53.5, probFuerte: 57, topeTot: 8, topeHc: 6
+      probMin: 53.5, probFuerte: 55.5, topeTot: 12, topeHc: 8
     };
+
+    // Ajustes guardados de versiones anteriores: conservar lo personal, renovar lo que cambió con la mezcla
+    function normalizarAjustes(guardados) {
+      const a = Object.assign({}, AJUSTES_DEFAULT, guardados || {});
+      if (!guardados || guardados.version !== AJUSTES_DEFAULT.version) {
+        ['version', 'pesoModelo', 'probFuerte', 'topeTot', 'topeHc'].forEach(k => a[k] = AJUSTES_DEFAULT[k]);
+      }
+      return a;
+    }
 
     // ================== ESTADO ==================
     const selectEqA = document.getElementById('eqA');
@@ -954,7 +969,8 @@
     const cuerpoHistorial = document.getElementById('cuerpoHistorial');
     const contenedorTopPicks = document.getElementById('contenedorTopPicks');
 
-    let ajustes = Object.assign({}, AJUSTES_DEFAULT, JSON.parse(localStorage.getItem('nbaAjustesModelo')) || {});
+    let ajustes = normalizarAjustes(JSON.parse(localStorage.getItem('nbaAjustesModelo')));
+    let paceLiga = null; // promedio de PACE de la liga (se calcula con los equipos cargados)
     let baseDatosEquipos = JSON.parse(localStorage.getItem('nbaEquiposStatsDB')) || {};
     let partidos = (JSON.parse(localStorage.getItem('nbaPartidosPro')) || []).map(migrarPartido);
 
@@ -983,15 +999,20 @@
       return momio < 0 ? Math.abs(momio) / (Math.abs(momio) + 100) : 100 / (momio + 100);
     }
 
+    // edge = ventaja del modelo puro. Se mezcla con la línea del casino antes de calcular la probabilidad,
+    // porque el mercado ya contiene mucha información que el modelo no ve.
     function evaluarMercado(edge, momio, sigma, tope) {
-      const prob = normalCDF(Math.abs(edge) / sigma);
-      const ev = prob * gananciaPorUnidad(momio) - (1 - prob);
+      const edgeMezcla = edge * ajustes.pesoModelo;
+      const prob = normalCDF(Math.abs(edgeMezcla) / sigma);
+      const b = gananciaPorUnidad(momio);
+      const ev = prob * b - (1 - prob);
+      const kelly = Math.max(0, (prob * b - (1 - prob)) / b) * KELLY_FRAC;
       let nivel;
       if (Math.abs(edge) > tope) nivel = 'revisar';
       else if (prob * 100 < ajustes.probMin || ev <= 0) nivel = 'pasar';
       else if (prob * 100 >= ajustes.probFuerte) nivel = 'fuerte';
       else nivel = 'normal';
-      return { edge, prob, ev, nivel, momio, res: null };
+      return { edge, edgeMezcla, prob, ev, kelly, nivel, momio, res: null };
     }
 
     function migrarPartido(p) {
@@ -1014,6 +1035,10 @@
     const fmtPct = x => (x * 100).toFixed(1) + '%';
     const fmtEV = x => (x >= 0 ? '+' : '') + (x * 100).toFixed(1) + '%';
     const r2 = n => Math.round(n * 100) / 100;
+
+    function textoMargen(eqA, eqB, margen) {
+      return margen > 0 ? `${eqA} por ${margen.toFixed(1)} pts` : `${eqB} por ${Math.abs(margen).toFixed(1)} pts`;
+    }
 
     function ladoTotales(p) {
       return p.tot.edge > 0 ? `ALTAS ${p.linea}` : `BAJAS ${p.linea}`;
@@ -1082,6 +1107,8 @@
         const suma = stats.reduce((acc, s) => acc + s.off, 0);
         document.getElementById('mediaLiga').value = (suma / stats.length).toFixed(1);
       }
+      // Con pocos equipos el promedio sale sesgado: entonces se usa el promedio simple de los dos equipos
+      paceLiga = stats.length >= 20 ? stats.reduce((acc, s) => acc + s.pace, 0) / stats.length : null;
     }
 
     async function cargarBaseDatosAutomatica() {
@@ -1249,7 +1276,8 @@
       const etiqueta = m.nivel === 'fuerte'
         ? `<span class="badge" style="background: ${fondoFuerte}; color: ${colorBase};">🔥 FUERTE ${texto}</span>`
         : `<span class="badge" style="color: ${colorBase};">${texto}</span>`;
-      return `${etiqueta}<span class="pick-meta">${fmtPct(m.prob)} · EV ${fmtEV(m.ev)} · momio ${fmtSigno(m.momio)}</span>`;
+      const kelly = m.kelly !== undefined ? ` · ¼ Kelly ${(m.kelly * 100).toFixed(1)}% bank` : '';
+      return `${etiqueta}<span class="pick-meta">${fmtPct(m.prob)} · EV ${fmtEV(m.ev)} · momio ${fmtSigno(m.momio)}${kelly}</span>`;
     }
 
     function badgeTotales(p) {
@@ -1290,11 +1318,13 @@
             <div class="tags-info">${p.notasAjuste || 'Sin ajustes'}</div>
           </td>
           <td class="divisor"><strong>${p.linea}</strong></td>
-          <td style="color:#fcd34d; font-weight:600;">${p.proyeccionTotal.toFixed(1)}</td>
+          <td style="color:#fcd34d; font-weight:600;">${p.proyeccionTotal.toFixed(1)}
+            <div class="tags-info">con mercado ${(p.linea + p.tot.edge * ajustes.pesoModelo).toFixed(1)}</div></td>
           <td>${badgeTotales(p)}</td>
           <td>${botonesResultado(p, 'tot')}</td>
           <td class="divisor"><strong>${fmtSigno(p.handicap)}</strong></td>
-          <td style="color:#d8b4fe;">${p.textoGanador}</td>
+          <td style="color:#d8b4fe;">${p.textoGanador}
+            <div class="tags-info">con mercado ${textoMargen(p.eqA, p.eqB, -p.handicap + p.hc.edge * ajustes.pesoModelo)}</div></td>
           <td>${badgeHandicap(p)}</td>
           <td>${botonesResultado(p, 'hc')}</td>
           <td class="divisor" style="text-align: center;">
@@ -1370,7 +1400,8 @@
           <span class="pick-jugada">${pick.m.nivel === 'fuerte' ? '🔥 ' : ''}${pick.jugada}</span>
           <span class="pick-partido">🏀 ${pick.partido}</span>
           <span class="pick-detalle">${pick.detalle}</span>
-          <span class="pick-ventaja">Prob. ${fmtPct(pick.m.prob)} · EV ${fmtEV(pick.m.ev)} · Ventaja ${Math.abs(pick.m.edge).toFixed(1)} pts</span>
+          <span class="pick-ventaja">Prob. ${fmtPct(pick.m.prob)} · EV ${fmtEV(pick.m.ev)} · Ventaja ${Math.abs(pick.m.edge).toFixed(1)} pts (con mercado ${Math.abs(pick.m.edge * ajustes.pesoModelo).toFixed(1)})</span>
+          ${pick.m.kelly !== undefined ? `<span class="pick-detalle">💰 Apostar ${(pick.m.kelly * 100).toFixed(1)}% del bank (¼ Kelly)</span>` : ''}
         `;
         contenedorTopPicks.appendChild(card);
       });
@@ -1449,7 +1480,7 @@
           partidos = datos.partidos.map(migrarPartido);
           baseDatosEquipos = datos.equipos || {};
           localStorage.setItem('nbaEquiposStatsDB', JSON.stringify(baseDatosEquipos));
-          aplicarAjustes(Object.assign({}, AJUSTES_DEFAULT, datos.ajustes || {}));
+          aplicarAjustes(normalizarAjustes(datos.ajustes));
           alert('✅ Respaldo cargado.');
         } catch (e) {
           alert('⚠️ Ese archivo no es un respaldo válido de esta app.');
@@ -1488,14 +1519,20 @@
       if (!baseDatosEquipos[eqB]) baseDatosEquipos[eqB] = { l10: { pace: paceB, off: offB, def: defB } };
       localStorage.setItem('nbaEquiposStatsDB', JSON.stringify(baseDatosEquipos));
 
-      // 1. Ritmo del partido (baja si alguno viene en B2B)
-      let ritmo = (paceA + paceB) / 2;
+      // 1. Ritmo esperado: Pace A × Pace B ÷ Pace liga (dos equipos rápidos aceleran más que el promedio)
+      let ritmo = paceLiga ? (paceA * paceB) / paceLiga : (paceA + paceB) / 2;
       if (descA === 0) ritmo -= RITMO_B2B;
       if (descB === 0) ritmo -= RITMO_B2B;
 
-      // 2. Puntos por 100 posesiones ajustados a la media de la liga
-      const ptsA100 = offA + defB - mediaLiga;
-      const ptsB100 = offB + defA - mediaLiga;
+      // 2. Back-to-back: el equipo cansado anota menos y también defiende peor
+      const offAdjA = offA + (descA === 0 ? B2B_OFF : 0);
+      const defAdjA = defA + (descA === 0 ? B2B_DEF : 0);
+      const offAdjB = offB + (descB === 0 ? B2B_OFF : 0);
+      const defAdjB = defB + (descB === 0 ? B2B_DEF : 0);
+
+      // Puntos por 100 posesiones ajustados a la media de la liga
+      const ptsA100 = offAdjA + defAdjB - mediaLiga;
+      const ptsB100 = offAdjB + defAdjA - mediaLiga;
 
       // 3. Localía repartida (no infla el total) + descanso, altura, giras
       const altura = EQUIPOS_ALTURA.includes(eqA);
@@ -1543,6 +1580,7 @@
 
     // ================== INICIO ==================
     actualizarEstadoMemoria();
+    reevaluarJornada(); // los picks pendientes se recalculan con la mezcla de mercado
     guardarYRenderizar();
     cargarBaseDatosAutomatica();
   </script>
